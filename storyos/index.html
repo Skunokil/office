@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Story OS</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <span class="topbar-logo">Story OS</span>
+      <span class="topbar-project">/ Детективный роман</span>
+    </div>
+    <div class="topbar-right">
+      <span class="topbar-status">v0.1</span>
+    </div>
+  </header>
+
+  <!-- MAIN LAYOUT -->
+  <div class="layout">
+
+    <!-- LEFT PANEL -->
+    <aside class="panel-left">
+      <div class="panel-left-header">
+        <span class="panel-title">Story OS</span>
+      </div>
+
+      <!-- Mode switcher -->
+      <div class="mode-switcher">
+        <button class="mode-btn active" data-mode="text">Text</button>
+        <button class="mode-btn" data-mode="dashboard">Dashboard</button>
+      </div>
+
+      <!-- Navigation sections -->
+      <nav class="nav-tree">
+
+        <div class="nav-section">
+          <div class="nav-section-header">Novel</div>
+          <ul class="tree">
+            <li class="tree-group">
+              <span class="tree-group-label tree-toggle" data-target="part1">Part I</span>
+              <ul class="tree-children" id="part1">
+                <li class="tree-item" data-type="chapter" data-id="ch1">Chapter 1</li>
+                <li class="tree-item" data-type="chapter" data-id="ch2">Chapter 2</li>
+              </ul>
+            </li>
+            <li class="tree-group">
+              <span class="tree-group-label tree-toggle" data-target="part2">Part II</span>
+              <ul class="tree-children" id="part2">
+                <li class="tree-item" data-type="chapter" data-id="ch3">Chapter 3</li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-header">Characters</div>
+          <ul class="flat-list">
+            <li class="tree-item" data-type="character" data-id="char1">Алексей Воронов</li>
+            <li class="tree-item" data-type="character" data-id="char2">Марина Соколова</li>
+            <li class="tree-item" data-type="character" data-id="char3">Иван Черных</li>
+          </ul>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-header">Locations</div>
+          <ul class="flat-list">
+            <li class="tree-item" data-type="location" data-id="loc1">Особняк Вороновых</li>
+            <li class="tree-item" data-type="location" data-id="loc2">Старый архив</li>
+          </ul>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-header">Events</div>
+          <ul class="flat-list">
+            <li class="tree-item" data-type="event" data-id="ev1">Убийство в особняке</li>
+            <li class="tree-item" data-type="event" data-id="ev2">Пропажа документов</li>
+          </ul>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-header">Relations</div>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-header">World Rules</div>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-header">Clues</div>
+          <ul class="flat-list">
+            <li class="tree-item" data-type="clue" data-id="clue1">Письмо без подписи</li>
+          </ul>
+        </div>
+
+      </nav>
+    </aside>
+
+    <!-- CENTER WORKSPACE -->
+    <main class="workspace">
+
+      <!-- Tabs -->
+      <div class="tab-bar">
+        <button class="tab active" data-tab="dashboard">Dashboard</button>
+        <button class="tab" data-tab="story-timeline">Story Timeline</button>
+        <button class="tab" data-tab="narrative-timeline">Narrative Timeline</button>
+        <button class="tab" data-tab="entity-graph">Entity Graph</button>
+        <button class="tab" data-tab="source-review">Source Review</button>
+      </div>
+
+      <!-- Tab content panels -->
+      <div class="tab-content active" id="tab-dashboard">
+
+        <!-- Stats cards -->
+        <section class="stats-cards">
+          <div class="stat-card" data-type="character" data-id="char-all">
+            <div class="stat-label">Characters</div>
+            <div class="stat-value">12</div>
+          </div>
+          <div class="stat-card" data-type="location" data-id="loc-all">
+            <div class="stat-label">Locations</div>
+            <div class="stat-value">8</div>
+          </div>
+          <div class="stat-card" data-type="event" data-id="ev-all">
+            <div class="stat-label">Events</div>
+            <div class="stat-value">37</div>
+          </div>
+          <div class="stat-card" data-type="relation" data-id="rel-all">
+            <div class="stat-label">Relations</div>
+            <div class="stat-value">24</div>
+          </div>
+          <div class="stat-card" data-type="clue" data-id="clue-all">
+            <div class="stat-label">Clues</div>
+            <div class="stat-value">15</div>
+          </div>
+        </section>
+
+        <!-- Recent narrative units -->
+        <section class="dashboard-block">
+          <h2 class="block-title">Recent narrative units</h2>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Unit</th>
+                <th>Type</th>
+                <th>Chapter</th>
+                <th>Updated</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="table-row tree-item" data-type="event" data-id="ev1">
+                <td>Убийство в особняке</td><td>Event</td><td>Ch. 1</td><td>2026-04-05</td>
+              </tr>
+              <tr class="table-row tree-item" data-type="character" data-id="char1">
+                <td>Алексей Воронов</td><td>Character</td><td>Ch. 1–3</td><td>2026-04-04</td>
+              </tr>
+              <tr class="table-row tree-item" data-type="clue" data-id="clue1">
+                <td>Письмо без подписи</td><td>Clue</td><td>Ch. 2</td><td>2026-04-03</td>
+              </tr>
+              <tr class="table-row tree-item" data-type="location" data-id="loc1">
+                <td>Особняк Вороновых</td><td>Location</td><td>Ch. 1–2</td><td>2026-04-02</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <!-- Event vs Narrative order -->
+        <section class="dashboard-block">
+          <h2 class="block-title">Event vs Narrative order</h2>
+          <div class="timeline-stub">
+            <div class="timeline-row">
+              <span class="tl-label">Story order</span>
+              <div class="tl-track">
+                <div class="tl-node" style="left:5%">Ev.1</div>
+                <div class="tl-node" style="left:22%">Ev.2</div>
+                <div class="tl-node" style="left:45%">Ev.3</div>
+                <div class="tl-node" style="left:68%">Ev.4</div>
+                <div class="tl-node" style="left:88%">Ev.5</div>
+              </div>
+            </div>
+            <div class="timeline-row">
+              <span class="tl-label">Narrative order</span>
+              <div class="tl-track">
+                <div class="tl-node tl-node--narrative" style="left:14%">Ev.3</div>
+                <div class="tl-node tl-node--narrative" style="left:30%">Ev.1</div>
+                <div class="tl-node tl-node--narrative" style="left:55%">Ev.5</div>
+                <div class="tl-node tl-node--narrative" style="left:72%">Ev.2</div>
+                <div class="tl-node tl-node--narrative" style="left:92%">Ev.4</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Selected entity details -->
+        <section class="dashboard-block" id="entity-details">
+          <h2 class="block-title">Selected entity details</h2>
+          <div class="entity-placeholder" id="entity-details-content">
+            <span class="placeholder-text">Select an entity from the tree or table to see details here.</span>
+          </div>
+        </section>
+
+      </div>
+
+      <div class="tab-content" id="tab-story-timeline">
+        <div class="stub-panel">
+          <span>Story Timeline — coming soon</span>
+        </div>
+      </div>
+
+      <div class="tab-content" id="tab-narrative-timeline">
+        <div class="stub-panel">
+          <span>Narrative Timeline — coming soon</span>
+        </div>
+      </div>
+
+      <div class="tab-content" id="tab-entity-graph">
+        <div class="stub-panel">
+          <span>Entity Graph — coming soon</span>
+        </div>
+      </div>
+
+      <div class="tab-content" id="tab-source-review">
+        <div class="stub-panel">
+          <span>Source Review — coming soon</span>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- RIGHT PANEL -->
+    <aside class="panel-right">
+      <div class="panel-right-header">
+        <span class="panel-title">Zina Context</span>
+      </div>
+
+      <!-- Current selection -->
+      <div class="context-block">
+        <div class="context-block-title">Current selection</div>
+        <div class="context-block-body" id="current-selection">
+          <span class="placeholder-text">Nothing selected</span>
+        </div>
+      </div>
+
+      <!-- Notes -->
+      <div class="context-block">
+        <div class="context-block-title">Notes</div>
+        <div class="context-block-body">
+          <textarea class="notes-input" placeholder="Write a note about this entity..."></textarea>
+        </div>
+      </div>
+
+      <!-- AI chat stub -->
+      <div class="context-block chat-block">
+        <div class="context-block-title">AI Assistant</div>
+        <div class="chat-messages" id="chat-messages">
+          <div class="chat-msg chat-msg--assistant">
+            <span class="chat-sender">Zina</span>
+            <span class="chat-text">Готова помочь с анализом текста, персонажей или событий.</span>
+          </div>
+        </div>
+        <div class="chat-input-row">
+          <input type="text" class="chat-input" id="chat-input" placeholder="Ask Zina..." />
+          <button class="chat-send-btn" id="chat-send">Send</button>
+        </div>
+      </div>
+
+    </aside>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
