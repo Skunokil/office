@@ -415,6 +415,10 @@ html, body {
   background: var(--bg-active);
   color: var(--accent);
 }
+.data-table tr.table-row.selected td:first-child {
+  border-left: 2px solid var(--accent);
+  padding-left: 8px;
+}
 
 /* ── Timeline stub ─────────────────────────────────────────── */
 .timeline-stub {
@@ -445,6 +449,7 @@ html, body {
   background: var(--bg-base);
   border: 1px solid var(--border);
   border-radius: var(--radius);
+  overflow: hidden;
 }
 
 .tl-node {
@@ -465,6 +470,40 @@ html, body {
   background: #3a4a2a;
   border-color: var(--accent-green);
   color: var(--accent-green);
+}
+
+.tl-node.selected {
+  background: var(--bg-active);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(108, 124, 255, 0.2);
+  z-index: 2;
+}
+
+.tl-node--narrative.selected {
+  border-color: var(--accent-green);
+  box-shadow: 0 0 0 2px rgba(62, 207, 142, 0.2);
+}
+
+/* Крайние узлы прилипают к краям дорожки */
+.tl-track .tl-node:first-child {
+  transform: translateY(-50%);
+}
+.tl-track .tl-node:last-child {
+  transform: translate(-100%, -50%);
+}
+
+/* Режимы масштабирования дорожек */
+.timeline-stub--compact .tl-node {
+  font-size: 10px;
+  padding: 2px 4px;
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.timeline-stub--expanded .tl-node {
+  font-size: 11px;
+  padding: 4px 8px;
 }
 
 /* ── Entity details ────────────────────────────────────────── */
@@ -509,7 +548,7 @@ html, body {
 .detail-header {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   margin-bottom: 6px;
 }
 
@@ -530,10 +569,11 @@ html, body {
 }
 
 .detail-summary {
-  font-size: 12px;
+  font-size: 11.5px;
   color: var(--text-secondary);
-  line-height: 1.6;
+  line-height: 1.5;
   margin-bottom: 10px;
+  max-width: 520px;
 }
 
 .detail-tags {
@@ -559,6 +599,7 @@ html, body {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
+  white-space: nowrap;
 }
 
 .detail-status--active,
@@ -815,12 +856,12 @@ html, body {
 }
 
 .timeline-item {
-  padding: 8px 10px;
+  padding: 10px 12px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--bg-card);
   cursor: pointer;
-  transition: background var(--transition), border-color var(--transition);
+  transition: background var(--transition), border-color var(--transition), box-shadow var(--transition);
 }
 
 .timeline-item:hover {
@@ -828,6 +869,28 @@ html, body {
   border-color: var(--border-light);
 }
 
+/* Хронология мира (фабула) — голубой ореол при наведении */
+#tab-story-timeline .timeline-item {
+  box-shadow: 0 0 0 1px transparent;
+}
+#tab-story-timeline .timeline-item:hover {
+  box-shadow: 0 0 0 2px rgba(108, 124, 255, 0.45); /* используем --accent (#6c7cff) */
+}
+
+/* Порядок изложения — зелёная полоса слева */
+.timeline-item--narrative {
+  border-left: 3px solid var(--accent-green);
+}
+
+/* Сохраняем зелёный слева при hover и selected */
+.timeline-item--narrative:hover {
+  border-left-color: var(--accent-green);
+}
+.timeline-item--narrative.selected {
+  border-left-color: var(--accent-green);
+}
+
+/* Выделение такое же, как у stat-card/table-row */
 .timeline-item.selected {
   background: var(--bg-active);
   border-color: var(--accent);

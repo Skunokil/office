@@ -119,7 +119,7 @@ summary:      'Ночь 14 февраля. Тело найдено в библи
 tags:         ['ключевое', 'преступление'],
 status:       'confirmed',
 storyTime:    '1923-02-14T02:30',
-narrativeOrder: 3,
+narrativeOrder: 2,
 locationId:   'loc1',
 characterIds: ['char1', 'char3', 'char4'],
 },
@@ -167,7 +167,7 @@ summary:      'Марина делает запись о «людях, кото�
 tags:         ['предыстория'],
 status:       'unverified',
 storyTime:    '1923-02-12T21:00',
-narrativeOrder: 2,
+narrativeOrder: 3,
 locationId:   'loc1',
 characterIds: ['char2'],
 },
@@ -299,21 +299,31 @@ function renderStoryTimeline() {
 
   container.innerHTML = eventsSorted.map(ev => {
     const loc = ev.locationId ? findById(ev.locationId) : null;
-    const time = formatDateTime(ev.storyTime);
+    const time = ev.storyTime ? ev.storyTime.replace('T', ' ') : '';
+    const typeLabel = TYPE_LABELS[ev.type] || ev.type;
+    const statusBadge = renderStatusBadge(ev.status);
 
     return `
       <div class="timeline-item" data-id="${ev.id}">
-        <div class="timeline-item-meta">
-          <span class="timeline-item-order">${time}</span>
-          <span class="timeline-item-type">${TYPE_LABELS[ev.type] || ev.type}</span>
+        <div class="detail-header">
+          <span class="detail-type">${typeLabel}</span>
+          ${statusBadge}
         </div>
-        <div class="timeline-item-title">${escapeHtml(ev.name)}</div>
-        <div class="timeline-item-sub">
-          ${loc ? `<span class="timeline-item-location">${escapeHtml(loc.name)}</span>` : ''}
-          ${ev.tags && ev.tags.length
-            ? `<span class="timeline-item-tags">${ev.tags.map(t => escapeHtml(t)).join(' · ')}</span>`
-            : ''}
+        <div class="detail-name">${escapeHtml(ev.name)}</div>
+        <div class="detail-summary">${escapeHtml(ev.summary)}</div>
+        <div class="detail-meta">
+          ${time ? `
+            <div class="detail-row">
+              <span class="detail-row-label">Время в мире</span>
+              <span class="detail-mono">${escapeHtml(time)}</span>
+            </div>` : ''}
+          ${loc ? `
+            <div class="detail-row">
+              <span class="detail-row-label">Локация</span>
+              <span>${escapeHtml(loc.name)}</span>
+            </div>` : ''}
         </div>
+        ${renderTags(ev.tags)}
       </div>
     `;
   }).join('');
@@ -339,20 +349,30 @@ function renderNarrativeTimeline() {
   container.innerHTML = eventsSorted.map(ev => {
     const loc = ev.locationId ? findById(ev.locationId) : null;
     const order = ev.narrativeOrder != null ? `#${ev.narrativeOrder}` : '';
+    const typeLabel = TYPE_LABELS[ev.type] || ev.type;
+    const statusBadge = renderStatusBadge(ev.status);
 
     return `
-      <div class="timeline-item" data-id="${ev.id}">
-        <div class="timeline-item-meta">
-          <span class="timeline-item-order">${order}</span>
-          <span class="timeline-item-type">${TYPE_LABELS[ev.type] || ev.type}</span>
+      <div class="timeline-item timeline-item--narrative" data-id="${ev.id}">
+        <div class="detail-header">
+          <span class="detail-type">${typeLabel}</span>
+          ${statusBadge}
         </div>
-        <div class="timeline-item-title">${escapeHtml(ev.name)}</div>
-        <div class="timeline-item-sub">
-          ${loc ? `<span class="timeline-item-location">${escapeHtml(loc.name)}</span>` : ''}
-          ${ev.tags && ev.tags.length
-            ? `<span class="timeline-item-tags">${ev.tags.map(t => escapeHtml(t)).join(' · ')}</span>`
-            : ''}
+        <div class="detail-name">${escapeHtml(ev.name)}</div>
+        <div class="detail-summary">${escapeHtml(ev.summary)}</div>
+        <div class="detail-meta">
+          ${order ? `
+            <div class="detail-row">
+              <span class="detail-row-label">Порядок раскрытия</span>
+              <span class="detail-mono">${escapeHtml(order)}</span>
+            </div>` : ''}
+          ${loc ? `
+            <div class="detail-row">
+              <span class="detail-row-label">Локация</span>
+              <span>${escapeHtml(loc.name)}</span>
+            </div>` : ''}
         </div>
+        ${renderTags(ev.tags)}
       </div>
     `;
   }).join('');
@@ -360,6 +380,57 @@ function renderNarrativeTimeline() {
   container.querySelectorAll('.timeline-item').forEach(el => {
     el.addEventListener('click', () => {
       const id = el.dataset.id;
+      if (id) selectItem(id);
+    });
+  });
+}
+
+function renderDashboardMiniTimelines() {
+  const storyTrack = document.getElementById('dashboard-story-track');
+  const narrativeTrack = document.getElementById('dashboard-narrative-track');
+
+  if (!storyTrack || !narrativeTrack) return;
+
+  function makeNodeLabel(ev) {
+    const order = ev.narrativeOrder != null ? ev.narrativeOrder : '?';
+    const title = ev.name || '';
+    const short = title.slice(0, 6);
+    return `С${order}: ${short}...`;
+  }
+
+  const byStory = [...mockEvents].sort((a, b) => {
+    if (!a.storyTime) return 1;
+    if (!b.storyTime) return -1;
+    return a.storyTime.localeCompare(b.storyTime);
+  });
+
+  const byNarrative = [...mockEvents].sort((a, b) => {
+    if (a.narrativeOrder == null) return 1;
+    if (b.narrativeOrder == null) return -1;
+    return a.narrativeOrder - b.narrativeOrder;
+  });
+
+  storyTrack.innerHTML = byStory.map((ev, idx, arr) => {
+    const left = arr.length === 1 ? 50 : (idx / (arr.length - 1)) * 100;
+    return `
+      <div class="tl-node" data-id="${ev.id}" style="left:${left}%">
+        ${escapeHtml(makeNodeLabel(ev))}
+      </div>
+    `;
+  }).join('');
+
+  narrativeTrack.innerHTML = byNarrative.map((ev, idx, arr) => {
+    const left = arr.length === 1 ? 50 : (idx / (arr.length - 1)) * 100;
+    return `
+      <div class="tl-node tl-node--narrative" data-id="${ev.id}" style="left:${left}%">
+        ${escapeHtml(makeNodeLabel(ev))}
+      </div>
+    `;
+  }).join('');
+
+  document.querySelectorAll('#dashboard-story-track .tl-node, #dashboard-narrative-track .tl-node').forEach(node => {
+    node.addEventListener('click', () => {
+      const id = node.dataset.id;
       if (id) selectItem(id);
     });
   });
@@ -451,14 +522,17 @@ default:          return renderBaseFields(obj);
 }
 let selectedId = null;
 function selectItem(id) {
-document.querySelectorAll('.tree-item.selected, .stat-card.selected, .table-row.selected, .timeline-item.selected')
-.forEach(el => el.classList.remove('selected'));
-selectedId = id;
-document.querySelectorAll(`[data-id="${id}"]`)
-.forEach(el => el.classList.add('selected'));
-const obj = findById(id);
-updateSelectionPanel(obj);
-updateEntityDetails(obj);
+  document.querySelectorAll('.tree-item.selected, .stat-card.selected, .table-row.selected, .timeline-item.selected, .tl-node.selected')
+    .forEach(el => el.classList.remove('selected'));
+
+  selectedId = id;
+
+  document.querySelectorAll(`[data-id="${id}"]`)
+    .forEach(el => el.classList.add('selected'));
+
+  const obj = findById(id);
+  updateSelectionPanel(obj);
+  updateEntityDetails(obj);
 }
 function updateSelectionPanel(obj) {
 const panel = document.getElementById('current-selection');
@@ -523,12 +597,12 @@ children.classList.toggle('hidden', isCollapsed);
 });
 }
 function initSelectables() {
-document.querySelectorAll('.tree-item, .stat-card, .table-row').forEach(el => {
-el.addEventListener('click', () => {
-const id = el.dataset.id;
-if (id) selectItem(id);
-});
-});
+  document.querySelectorAll('.tree-item, .stat-card, .table-row').forEach(el => {
+    el.addEventListener('click', () => {
+      const id = el.dataset.id;
+      if (id) selectItem(id);
+    });
+  });
 }
 const STUB_REPLIES = [
 'Это интересный вопрос. Давайте посмотрим на связи между персонажами.',
@@ -587,4 +661,5 @@ document.addEventListener('DOMContentLoaded', () => {
   initSelectables();
   initChat();
   initTimelines();
+  renderDashboardMiniTimelines();
 });

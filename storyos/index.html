@@ -177,25 +177,17 @@
         <!-- Event vs Narrative order -->
         <section class="dashboard-block">
           <h2 class="block-title">События vs порядок изложения</h2>
-          <div class="timeline-stub">
+          <div class="timeline-stub timeline-stub--compact">
             <div class="timeline-row">
               <span class="tl-label">Порядок в мире</span>
-              <div class="tl-track">
-                <div class="tl-node" style="left:5%">Ev.1</div>
-                <div class="tl-node" style="left:22%">Ev.2</div>
-                <div class="tl-node" style="left:45%">Ev.3</div>
-                <div class="tl-node" style="left:68%">Ev.4</div>
-                <div class="tl-node" style="left:88%">Ev.5</div>
+              <div class="tl-track" id="dashboard-story-track">
+                <!-- Заполняется через JS -->
               </div>
             </div>
             <div class="timeline-row">
               <span class="tl-label">Порядок для читателя</span>
-              <div class="tl-track">
-                <div class="tl-node tl-node--narrative" style="left:14%">Ev.3</div>
-                <div class="tl-node tl-node--narrative" style="left:30%">Ev.1</div>
-                <div class="tl-node tl-node--narrative" style="left:55%">Ev.5</div>
-                <div class="tl-node tl-node--narrative" style="left:72%">Ev.2</div>
-                <div class="tl-node tl-node--narrative" style="left:92%">Ev.4</div>
+              <div class="tl-track" id="dashboard-narrative-track">
+                <!-- Заполняется через JS -->
               </div>
             </div>
           </div>
