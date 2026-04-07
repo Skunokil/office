@@ -7,9 +7,8 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-
   <!-- TOP BAR -->
-  <header class="topbar">
+<header class="topbar">
     <div class="topbar-left">
       <span class="topbar-logo">Story OS</span>
       <span class="topbar-project">/ Детективный роман</span>
@@ -18,10 +17,8 @@
       <span class="topbar-status">v0.1</span>
     </div>
   </header>
-
   <!-- MAIN LAYOUT -->
-  <div class="layout">
-
+<div class="layout">
     <!-- LEFT PANEL -->
     <aside class="panel-left">
       <div class="panel-left-header">
@@ -30,34 +27,34 @@
 
       <!-- Mode switcher -->
       <div class="mode-switcher">
-        <button class="mode-btn active" data-mode="text">Text</button>
-        <button class="mode-btn" data-mode="dashboard">Dashboard</button>
+        <button class="mode-btn active" data-mode="text">Текст</button>
+        <button class="mode-btn" data-mode="dashboard">Обзор</button>
       </div>
 
       <!-- Navigation sections -->
       <nav class="nav-tree">
 
         <div class="nav-section">
-          <div class="nav-section-header">Novel</div>
+          <div class="nav-section-header">Роман</div>
           <ul class="tree">
             <li class="tree-group">
-              <span class="tree-group-label tree-toggle" data-target="part1">Part I</span>
+              <span class="tree-group-label tree-toggle" data-target="part1">Часть I</span>
               <ul class="tree-children" id="part1">
-                <li class="tree-item" data-type="chapter" data-id="ch1">Chapter 1</li>
-                <li class="tree-item" data-type="chapter" data-id="ch2">Chapter 2</li>
+                <li class="tree-item" data-type="chapter" data-id="ch1">Глава 1</li>
+                <li class="tree-item" data-type="chapter" data-id="ch2">Глава 2</li>
               </ul>
             </li>
             <li class="tree-group">
-              <span class="tree-group-label tree-toggle" data-target="part2">Part II</span>
+              <span class="tree-group-label tree-toggle" data-target="part2">Часть II</span>
               <ul class="tree-children" id="part2">
-                <li class="tree-item" data-type="chapter" data-id="ch3">Chapter 3</li>
+                <li class="tree-item" data-type="chapter" data-id="ch3">Глава 3</li>
               </ul>
             </li>
           </ul>
         </div>
 
         <div class="nav-section">
-          <div class="nav-section-header">Characters</div>
+          <div class="nav-section-header">Персонажи</div>
           <ul class="flat-list">
             <li class="tree-item" data-type="character" data-id="char1">Алексей Воронов</li>
             <li class="tree-item" data-type="character" data-id="char2">Марина Соколова</li>
@@ -67,7 +64,7 @@
         </div>
 
         <div class="nav-section">
-          <div class="nav-section-header">Locations</div>
+          <div class="nav-section-header">Локации</div>
           <ul class="flat-list">
             <li class="tree-item" data-type="location" data-id="loc1">Особняк Вороновых</li>
             <li class="tree-item" data-type="location" data-id="loc2">Старый архив</li>
@@ -76,7 +73,7 @@
         </div>
 
         <div class="nav-section">
-          <div class="nav-section-header">Events</div>
+          <div class="nav-section-header">События</div>
           <ul class="flat-list">
             <li class="tree-item" data-type="event" data-id="ev1">Убийство в особняке</li>
             <li class="tree-item" data-type="event" data-id="ev2">Пропажа документов</li>
@@ -87,15 +84,15 @@
         </div>
 
         <div class="nav-section">
-          <div class="nav-section-header">Relations</div>
+          <div class="nav-section-header">Связи</div>
         </div>
 
         <div class="nav-section">
-          <div class="nav-section-header">World Rules</div>
+          <div class="nav-section-header">Правила мира</div>
         </div>
 
         <div class="nav-section">
-          <div class="nav-section-header">Clues</div>
+          <div class="nav-section-header">Улики</div>
           <ul class="flat-list">
             <li class="tree-item" data-type="clue" data-id="clue1">Письмо без подписи</li>
             <li class="tree-item" data-type="clue" data-id="clue2">Сломанный замок сейфа</li>
@@ -111,11 +108,11 @@
 
       <!-- Tabs -->
       <div class="tab-bar">
-        <button class="tab active" data-tab="dashboard">Dashboard</button>
-        <button class="tab" data-tab="story-timeline">Story Timeline</button>
-        <button class="tab" data-tab="narrative-timeline">Narrative Timeline</button>
-        <button class="tab" data-tab="entity-graph">Entity Graph</button>
-        <button class="tab" data-tab="source-review">Source Review</button>
+        <button class="tab active" data-tab="dashboard">Обзор</button>
+        <button class="tab" data-tab="story-timeline">Хронология мира</button>
+        <button class="tab" data-tab="narrative-timeline">Порядок изложения</button>
+        <button class="tab" data-tab="entity-graph">Граф сущностей</button>
+        <button class="tab" data-tab="source-review">Разбор источника</button>
       </div>
 
       <!-- Tab content panels -->
@@ -124,54 +121,54 @@
         <!-- Stats cards -->
         <section class="stats-cards">
           <div class="stat-card" data-type="character" data-id="char-all">
-            <div class="stat-label">Characters</div>
+            <div class="stat-label">Персонажи</div>
             <div class="stat-value">12</div>
           </div>
           <div class="stat-card" data-type="location" data-id="loc-all">
-            <div class="stat-label">Locations</div>
+            <div class="stat-label">Локации</div>
             <div class="stat-value">8</div>
           </div>
           <div class="stat-card" data-type="event" data-id="ev-all">
-            <div class="stat-label">Events</div>
+            <div class="stat-label">События</div>
             <div class="stat-value">37</div>
           </div>
           <div class="stat-card" data-type="relation" data-id="rel-all">
-            <div class="stat-label">Relations</div>
+            <div class="stat-label">Связи</div>
             <div class="stat-value">24</div>
           </div>
           <div class="stat-card" data-type="clue" data-id="clue-all">
-            <div class="stat-label">Clues</div>
+            <div class="stat-label">Улики</div>
             <div class="stat-value">15</div>
           </div>
         </section>
 
         <!-- Recent narrative units -->
         <section class="dashboard-block">
-          <h2 class="block-title">Recent narrative units</h2>
+          <h2 class="block-title">Последние единицы повествования</h2>
           <table class="data-table">
             <thead>
               <tr>
-                <th>Unit</th>
-                <th>Type</th>
-                <th>Chapter</th>
-                <th>Updated</th>
+                <th>Единица</th>
+                <th>Тип</th>
+                <th>Глава</th>
+                <th>Статус</th>
               </tr>
             </thead>
             <tbody>
               <tr class="table-row" data-type="event" data-id="ev1">
-                <td>Убийство в особняке</td><td>Event</td><td>Ch. 1</td><td>confirmed</td>
+                <td>Убийство в особняке</td><td>Событие</td><td>Гл. 1</td><td>Подтвержено</td>
               </tr>
               <tr class="table-row" data-type="event" data-id="ev3">
-                <td>Встреча в архиве</td><td>Event</td><td>Ch. 2</td><td>unverified</td>
+                <td>Встреча в архиве</td><td>Событие</td><td>Гл. 2</td><td>Не проверено</td>
               </tr>
               <tr class="table-row" data-type="character" data-id="char4">
-                <td>Следователь Громов</td><td>Character</td><td>Ch. 1–2</td><td>active</td>
+                <td>Следователь Громов</td><td>Персонаж</td><td>Гл. 1–2</td><td>Активно</td>
               </tr>
               <tr class="table-row" data-type="clue" data-id="clue1">
-                <td>Письмо без подписи</td><td>Clue</td><td>Ch. 1</td><td>confirmed</td>
+                <td>Письмо без подписи</td><td>Улика</td><td>Гл. 1</td><td>Подтвержено</td>
               </tr>
               <tr class="table-row" data-type="location" data-id="loc2">
-                <td>Старый архив</td><td>Location</td><td>Ch. 2</td><td>active</td>
+                <td>Старый архив</td><td>Локация</td><td>Гл. 2</td><td>Активно</td>
               </tr>
             </tbody>
           </table>
@@ -179,10 +176,10 @@
 
         <!-- Event vs Narrative order -->
         <section class="dashboard-block">
-          <h2 class="block-title">Event vs Narrative order</h2>
+          <h2 class="block-title">События vs порядок изложения</h2>
           <div class="timeline-stub">
             <div class="timeline-row">
-              <span class="tl-label">Story order</span>
+              <span class="tl-label">Порядок в мире</span>
               <div class="tl-track">
                 <div class="tl-node" style="left:5%">Ev.1</div>
                 <div class="tl-node" style="left:22%">Ev.2</div>
@@ -192,7 +189,7 @@
               </div>
             </div>
             <div class="timeline-row">
-              <span class="tl-label">Narrative order</span>
+              <span class="tl-label">Порядок для читателя</span>
               <div class="tl-track">
                 <div class="tl-node tl-node--narrative" style="left:14%">Ev.3</div>
                 <div class="tl-node tl-node--narrative" style="left:30%">Ev.1</div>
@@ -206,35 +203,41 @@
 
         <!-- Selected entity details -->
         <section class="dashboard-block" id="entity-details">
-          <h2 class="block-title">Selected entity details</h2>
+          <h2 class="block-title">Детали выбранной сущности</h2>
           <div class="entity-placeholder" id="entity-details-content">
-            <span class="placeholder-text">Select an entity from the tree or table to see details here.</span>
+            <span class="placeholder-text">Выберите сущность в дереве или таблице, чтобы увидеть детали.</span>
           </div>
         </section>
 
       </div>
 
-      <div class="tab-content" id="tab-story-timeline">
-        <div class="stub-panel">
-          <span>Story Timeline — coming soon</span>
-        </div>
+            <div class="tab-content" id="tab-story-timeline">
+        <section class="dashboard-block">
+          <h2 class="block-title">Хронология мира</h2>
+          <div class="timeline-list" id="story-timeline-list">
+            <!-- Заполняется через JS -->
+          </div>
+        </section>
       </div>
 
       <div class="tab-content" id="tab-narrative-timeline">
-        <div class="stub-panel">
-          <span>Narrative Timeline — coming soon</span>
-        </div>
+        <section class="dashboard-block">
+          <h2 class="block-title">Порядок изложения</h2>
+          <div class="timeline-list" id="narrative-timeline-list">
+            <!-- Заполняется через JS -->
+          </div>
+        </section>
       </div>
 
       <div class="tab-content" id="tab-entity-graph">
         <div class="stub-panel">
-          <span>Entity Graph — coming soon</span>
+          <span>Граф сущностей — скоро будет</span>
         </div>
       </div>
 
       <div class="tab-content" id="tab-source-review">
         <div class="stub-panel">
-          <span>Source Review — coming soon</span>
+          <span>Разбор источника — скоро будет</span>
         </div>
       </div>
 
@@ -243,44 +246,43 @@
     <!-- RIGHT PANEL -->
     <aside class="panel-right">
       <div class="panel-right-header">
-        <span class="panel-title">Zina Context</span>
+        <span class="panel-title">Контекст Зины</span>
       </div>
 
       <!-- Current selection -->
       <div class="context-block">
-        <div class="context-block-title">Current selection</div>
+        <div class="context-block-title">Текущий выбор</div>
         <div class="context-block-body" id="current-selection">
-          <span class="placeholder-text">Nothing selected</span>
+          <span class="placeholder-text">Ничего не выбрано</span>
         </div>
       </div>
 
       <!-- Notes -->
       <div class="context-block">
-        <div class="context-block-title">Notes</div>
+        <div class="context-block-title">Заметки</div>
         <div class="context-block-body">
-          <textarea class="notes-input" placeholder="Write a note about this entity..."></textarea>
+          <textarea class="notes-input" placeholder="Запишите заметку об этой сущности..."></textarea>
         </div>
       </div>
 
       <!-- AI chat stub -->
       <div class="context-block chat-block">
-        <div class="context-block-title">AI Assistant</div>
+        <div class="context-block-title">ИИ-помощник</div>
         <div class="chat-messages" id="chat-messages">
           <div class="chat-msg chat-msg--assistant">
-            <span class="chat-sender">Zina</span>
+            <span class="chat-sender">Зина</span>
             <span class="chat-text">Готова помочь с анализом текста, персонажей или событий.</span>
           </div>
         </div>
         <div class="chat-input-row">
-          <input type="text" class="chat-input" id="chat-input" placeholder="Ask Zina..." />
-          <button class="chat-send-btn" id="chat-send">Send</button>
+          <input type="text" class="chat-input" id="chat-input" placeholder="Спросить Зину..." />
+          <button class="chat-send-btn" id="chat-send">Отправить</button>
         </div>
       </div>
 
     </aside>
 
-  </div>
-
+</div>
   <script src="app.js"></script>
 </body>
 </html>

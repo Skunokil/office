@@ -807,3 +807,67 @@ html, body {
 
   .topbar { position: sticky; top: 0; z-index: 100; }
 }
+
+.timeline-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.timeline-item {
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition);
+}
+
+.timeline-item:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-light);
+}
+
+.timeline-item.selected {
+  background: var(--bg-active);
+  border-color: var(--accent);
+}
+
+.timeline-item-meta {
+  display: flex;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.timeline-item-order {
+  font-family: var(--font-mono);
+}
+
+.timeline-item-type {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.timeline-item-title {
+  font-size: 13px;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.timeline-item-sub {
+  font-size: 11px;
+  color: var(--text-secondary);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.timeline-item-location {
+  color: var(--accent);
+}
+
+.timeline-item-tags {
+  opacity: 0.8;
+}
