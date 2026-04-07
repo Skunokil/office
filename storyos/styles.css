@@ -681,6 +681,178 @@ html, body {
   border-radius: 0 var(--radius) var(--radius) 0;
 }
 
+/* ── Event detail card: wide dashboard layout ───────────────── */
+
+.event-detail-card {
+  width: 100%;
+}
+
+.event-detail-grid {
+  display: grid;
+  grid-template-columns:
+    max-content
+    max-content
+    minmax(180px, 1.05fr)
+    minmax(220px, 0.85fr)
+    minmax(120px, max-content)
+    minmax(220px, 1fr)
+    minmax(150px, 0.8fr);
+  align-items: start;
+  column-gap: 18px;
+  row-gap: 8px;
+}
+
+.event-detail-type,
+.event-detail-status {
+  padding-top: 2px;
+  white-space: nowrap;
+}
+
+.event-detail-type {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--text-muted);
+}
+
+.event-detail-title {
+  min-width: 0;
+  padding-left: 8px;
+}
+
+.event-detail-summary {
+  min-width: 0;
+}
+
+.event-detail-summary .detail-summary {
+  max-width: 34ch;
+  margin-bottom: 0;
+}
+
+.event-detail-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-items: flex-start;
+  padding-top: 1px;
+}
+
+.event-detail-facts {
+  min-width: 220px;
+  padding: 10px 12px;
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.event-detail-facts-grid {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 8px 10px;
+}
+
+.event-detail-fact-key {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+
+.event-detail-fact-val {
+  font-size: 12px;
+  color: var(--text-primary);
+  line-height: 1.35;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.event-detail-participants {
+  min-width: 0;
+  padding-left: 8px;
+}
+
+.event-detail-participants-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+  line-height: 1.35;
+}
+
+.event-detail-participants-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.event-detail-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 4px 8px;
+  background: var(--bg-hover);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.event-detail-grid .detail-name {
+  margin-bottom: 0;
+}
+
+.event-detail-grid .detail-summary {
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+
+.event-detail-grid .detail-status {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Средний экран: переносим правые блоки ниже, чтобы не давить заголовок */
+@media (max-width: 1280px) {
+  .event-detail-grid {
+    grid-template-columns:
+      max-content
+      max-content
+      minmax(220px, 1fr)
+      minmax(220px, 1fr);
+  }
+
+  .event-detail-tags,
+  .event-detail-facts,
+  .event-detail-participants {
+    grid-column: 3 / -1;
+  }
+}
+
+/* Узкий экран: уходим в одну колонку */
+@media (max-width: 900px) {
+  .event-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .event-detail-title,
+  .event-detail-participants {
+    padding-left: 0;
+  }
+
+  .event-detail-summary .detail-summary {
+    max-width: none;
+  }
+
+  .event-detail-facts {
+    min-width: 0;
+  }
+}
+
 /* ── Right panel: context blocks ───────────────────────────── */
 .panel-right {
   overflow-y: auto;

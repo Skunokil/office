@@ -453,27 +453,68 @@ function renderBaseFields(obj) {
 return `<div class="detail-header"> <span class="detail-type">${TYPE_LABELS[obj.type] || obj.type}</span> ${renderStatusBadge(obj.status)} </div> <div class="detail-name">${escapeHtml(obj.name || obj.title || '')}</div> <div class="detail-summary">${escapeHtml(obj.summary || '')}</div> ${renderTags(obj.tags)}`;
 }
 function renderEventDetail(ev) {
-const location = ev.locationId ? findById(ev.locationId) : null;
-const participants = (ev.characterIds || [])
-.map(id => findById(id))
-.filter(Boolean);
-const locLine = location
-  ? `<div class="detail-row"><span class="detail-row-label">Локация</span><span>${escapeHtml(location.name)}</span></div>`
-  : '';
+  const location = ev.locationId ? findById(ev.locationId) : null;
+  const participants = (ev.characterIds || [])
+    .map(id => findById(id))
+    .filter(Boolean);
 
-const timeLine = ev.storyTime
-  ? `<div class="detail-row"><span class="detail-row-label">Время в мире</span><span class="detail-mono">${escapeHtml(ev.storyTime)}</span></div>`
-  : '';
+  const typeLabel = TYPE_LABELS[ev.type] || ev.type;
+  const statusBadge = renderStatusBadge(ev.status);
 
-const orderLine = ev.narrativeOrder != null
-  ? `<div class="detail-row"><span class="detail-row-label">Порядок раскрытия</span><span class="detail-mono">#${ev.narrativeOrder}</span></div>`
-  : '';
+  const tagsHtml = (ev.tags && ev.tags.length)
+    ? `<div class="event-detail-tags">${ev.tags.map(t => `<span class="detail-tag">${escapeHtml(t)}</span>`).join('')}</div>`
+    : '';
 
-const partList = participants.length
-  ? `<div class="detail-section-title">Участники</div>
-     <ul class="detail-list">${participants.map(p => `<li>${escapeHtml(p.name)}</li>`).join('')}</ul>`
-  : '';
-return `${renderBaseFields(ev)} <div class="detail-meta"> ${timeLine}${orderLine}${locLine} </div> ${partList}`;
+  const factsHtml = `
+    <div class="event-detail-facts">
+      <div class="event-detail-facts-grid">
+        ${ev.storyTime ? `
+          <div class="event-detail-fact-key">Время в мире</div>
+          <div class="event-detail-fact-val detail-mono">${escapeHtml(ev.storyTime.replace('T', ' '))}</div>
+        ` : ''}
+        ${ev.narrativeOrder != null ? `
+          <div class="event-detail-fact-key">Порядок раскрытия</div>
+          <div class="event-detail-fact-val detail-mono">#${ev.narrativeOrder}</div>
+        ` : ''}
+        ${location ? `
+          <div class="event-detail-fact-key">Локация</div>
+          <div class="event-detail-fact-val">${escapeHtml(location.name)}</div>
+        ` : ''}
+      </div>
+    </div>
+  `;
+
+  const participantsHtml = `
+    <div class="event-detail-participants">
+      <div class="event-detail-participants-label">Участники</div>
+      <div class="event-detail-participants-list">
+        ${participants.length
+          ? participants.map(p => `<span class="event-detail-chip">${escapeHtml(p.name)}</span>`).join('')
+          : `<span class="event-detail-chip">—</span>`}
+      </div>
+    </div>
+  `;
+
+  return `
+    <div class="event-detail-card">
+      <div class="event-detail-grid">
+        <div class="event-detail-type">${typeLabel}</div>
+        <div class="event-detail-status">${statusBadge}</div>
+
+        <div class="event-detail-title">
+          <div class="detail-name">${escapeHtml(ev.name)}</div>
+        </div>
+
+        <div class="event-detail-summary">
+          <div class="detail-summary">${escapeHtml(ev.summary || '')}</div>
+        </div>
+
+        ${tagsHtml}
+        ${factsHtml}
+        ${participantsHtml}
+      </div>
+    </div>
+  `;
 }
 function renderCharacterDetail(char) {
 const relations = getCharacterRelations(char.id);
