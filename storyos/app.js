@@ -813,6 +813,7 @@ function selectItem(id) {
   const obj = findById(id);
   updateSelectionPanel(obj);
   updateEntityDetails(obj);
+  renderEntityGraph(id);
 }
 function updateSelectionPanel(obj) {
 const panel = document.getElementById('current-selection');
@@ -844,6 +845,195 @@ return;
 }
 block.innerHTML = renderDetail(obj);
 }
+// ══════════════════════════════════════════════════════════════
+// ENTITY GRAPH TAB
+// ══════════════════════════════════════════════════════════════
+
+const GRAPH_NODE_COLORS = {
+  character: '#6c7cff',
+  event:     '#f6b73c',
+  location:  '#3ecf8e',
+  clue:      '#e05c5c',
+  worldRule: '#a0b0cc',
+  chapter:   '#9b7ae8',
+  category:  '#555870',
+};
+
+// Returns array of { neighborId, label } for entities connected to id.
+// Sources: mockRelations + structural links (characterIds, locationId, linkedEventIds).
+function getEntityGraphNeighbors(id) {
+  const neighbors = new Map(); // neighborId → { id, label }
+
+  // 1. mockRelations — приоритет (авторские метки идут первыми)
+  mockRelations.forEach(r => {
+    if (r.fromId === id && !neighbors.has(r.toId))
+      neighbors.set(r.toId, { id: r.toId, label: r.label });
+    if (r.toId === id && !neighbors.has(r.fromId))
+      neighbors.set(r.fromId, { id: r.fromId, label: r.label });
+  });
+
+  // 2. Events: character → events, event → location + chars, location → events
+  mockEvents.forEach(ev => {
+    const chars = ev.characterIds || [];
+    const locId = ev.locationId;
+    if (chars.includes(id) && !neighbors.has(ev.id))
+      neighbors.set(ev.id, { id: ev.id, label: 'участник' });
+    if (ev.id === id) {
+      chars.forEach(cId => {
+        if (!neighbors.has(cId)) neighbors.set(cId, { id: cId, label: 'участник' });
+      });
+      if (locId && !neighbors.has(locId))
+        neighbors.set(locId, { id: locId, label: 'место' });
+    }
+    if (locId === id && !neighbors.has(ev.id))
+      neighbors.set(ev.id, { id: ev.id, label: 'здесь' });
+  });
+
+  // 3. Chapters: chapter → linkedEvents и обратно
+  mockNarrativeUnits.forEach(ch => {
+    const linked = ch.linkedEventIds || [];
+    if (ch.id === id)
+      linked.forEach(evId => {
+        if (!neighbors.has(evId)) neighbors.set(evId, { id: evId, label: 'в главе' });
+      });
+    if (linked.includes(id) && !neighbors.has(ch.id))
+      neighbors.set(ch.id, { id: ch.id, label: 'в главе' });
+  });
+
+  return Array.from(neighbors.values()).filter(n => findById(n.id));
+}
+
+function buildOverviewGraphData() {
+  const SVG_W = 800, SVG_H = 480;
+  const cx = SVG_W / 2, cy = SVG_H / 2;
+  const overviewIds = ['char1', 'char2', 'char3', 'char4', 'ev1', 'ev2', 'loc1', 'clue1'];
+  const R = 185;
+  const nodes = [];
+  const edges = [];
+
+  overviewIds.forEach((id, i) => {
+    const obj = findById(id);
+    if (!obj) return;
+    const angle = -Math.PI / 2 + (i * 2 * Math.PI) / overviewIds.length;
+    nodes.push({ id, name: obj.name || obj.title, type: obj.type,
+      x: cx + R * Math.cos(angle), y: cy + R * Math.sin(angle), isCenter: false });
+  });
+
+  const nodeIds = new Set(overviewIds);
+  mockRelations.forEach(rel => {
+    if (!nodeIds.has(rel.fromId) || !nodeIds.has(rel.toId)) return;
+    const from = nodes.find(n => n.id === rel.fromId);
+    const to   = nodes.find(n => n.id === rel.toId);
+    if (from && to) edges.push({ fromId: rel.fromId, toId: rel.toId, label: rel.label,
+      fx: from.x, fy: from.y, tx: to.x, ty: to.y });
+  });
+
+  // ev1 → loc1 (structural link not in mockRelations)
+  const ev1Node  = nodes.find(n => n.id === 'ev1');
+  const loc1Node = nodes.find(n => n.id === 'loc1');
+  if (ev1Node && loc1Node) {
+    edges.push({ fromId: 'ev1', toId: 'loc1', label: 'место',
+      fx: ev1Node.x, fy: ev1Node.y, tx: loc1Node.x, ty: loc1Node.y });
+  }
+
+  return { nodes, edges, empty: false, isOverview: true };
+}
+
+function buildGraphData(selectedId) {
+  if (!selectedId) return buildOverviewGraphData();
+
+  const center = findById(selectedId);
+  if (!center || center.type === 'category') return buildOverviewGraphData();
+
+  const SVG_W = 800, SVG_H = 480;
+  const cx = SVG_W / 2, cy = SVG_H / 2;
+
+  const neighborLinks = getEntityGraphNeighbors(selectedId);
+  const nodes = [{ id: selectedId, name: center.name || center.title, type: center.type,
+    x: cx, y: cy, isCenter: true }];
+  const edges = [];
+
+  if (!neighborLinks.length) return { nodes, edges, empty: true };
+
+  const R = Math.min(180, 130 + neighborLinks.length * 8);
+  neighborLinks.forEach(({ id: neighborId, label }, i) => {
+    const angle = -Math.PI / 2 + (i * 2 * Math.PI) / neighborLinks.length;
+    const nx = cx + R * Math.cos(angle);
+    const ny = cy + R * Math.sin(angle);
+    const neighbor = findById(neighborId);
+    nodes.push({ id: neighborId, name: neighbor.name || neighbor.title, type: neighbor.type,
+      x: nx, y: ny, isCenter: false });
+    edges.push({ fromId: selectedId, toId: neighborId, label,
+      fx: cx, fy: cy, tx: nx, ty: ny });
+  });
+
+  return { nodes, edges, empty: false };
+}
+
+function renderEntityGraph(selectedId) {
+  const svg        = document.getElementById('entity-graph-svg');
+  const emptyState = document.getElementById('graph-empty-state');
+  const subtitle   = document.getElementById('graph-subtitle');
+  if (!svg) return;
+
+  const edgesLayer = document.getElementById('graph-edges-layer');
+  const nodesLayer = document.getElementById('graph-nodes-layer');
+  if (!edgesLayer || !nodesLayer) return;
+
+  const { nodes, edges, empty, isOverview } = buildGraphData(selectedId);
+
+  if (subtitle) {
+    if (isOverview) {
+      subtitle.textContent = 'Обзор: ключевые узлы и связи';
+    } else if (selectedId) {
+      const obj = findById(selectedId);
+      subtitle.textContent = obj ? `Фокус: ${obj.name || obj.title}` : '';
+    }
+  }
+
+  if (empty) {
+    if (emptyState) {
+      emptyState.style.display = 'flex';
+      emptyState.textContent = 'У выбранной сущности пока не найдено визуализируемых связей.';
+    }
+    edgesLayer.innerHTML = '';
+    nodesLayer.innerHTML = '';
+    return;
+  }
+
+  if (emptyState) emptyState.style.display = 'none';
+
+  edgesLayer.innerHTML = edges.map(e => {
+    const mx = (e.fx + e.tx) / 2;
+    const my = (e.fy + e.ty) / 2 - 5;
+    return `
+      <line x1="${e.fx}" y1="${e.fy}" x2="${e.tx}" y2="${e.ty}" class="graph-edge"/>
+      <text x="${mx}" y="${my}" class="graph-edge-label">${escapeHtml(e.label)}</text>
+    `;
+  }).join('');
+
+  nodesLayer.innerHTML = nodes.map(n => {
+    const color = GRAPH_NODE_COLORS[n.type] || '#888';
+    const r     = n.isCenter ? 28 : 20;
+    const label = n.name.length > 15 ? n.name.slice(0, 13) + '…' : n.name;
+    const abbr  = (TYPELABELS[n.type] || n.type).slice(0, 3).toUpperCase();
+    return `
+      <g class="graph-node${n.isCenter ? ' graph-node--center' : ''}" data-id="${n.id}" transform="translate(${n.x},${n.y})">
+        <circle r="${r}" fill="${color}20" stroke="${color}" stroke-width="${n.isCenter ? 2.5 : 1.5}" class="graph-node-circle"/>
+        <text class="graph-node-type" dy="4" fill="${color}">${escapeHtml(abbr)}</text>
+        <text class="graph-node-label" dy="${r + 13}">${escapeHtml(label)}</text>
+      </g>
+    `;
+  }).join('');
+
+  nodesLayer.querySelectorAll('.graph-node').forEach(el => {
+    el.addEventListener('click', () => {
+      const id = el.dataset.id;
+      if (id) selectItem(id);
+    });
+  });
+}
+
 // ══════════════════════════════════════════════════════════════
 // SOURCE FRAGMENT TAB
 // ══════════════════════════════════════════════════════════════
@@ -1071,6 +1261,7 @@ document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('activ
 tab.classList.add('active');
 const target = document.getElementById('tab-' + tab.dataset.tab);
 if (target) target.classList.add('active');
+if (tab.dataset.tab === 'entity-graph') renderEntityGraph(selectedId);
 });
 });
 }
@@ -1162,4 +1353,5 @@ document.addEventListener('DOMContentLoaded', () => {
   initTimelines();
   renderDashboardMiniTimelines();
   initSourceFragmentTab();
+  renderEntityGraph(null);
 });

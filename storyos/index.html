@@ -209,8 +209,27 @@
       </div>
 
       <div class="tab-content" id="tab-entity-graph">
-        <div class="stub-panel">
-          <span>Граф сущностей — скоро будет</span>
+        <div class="graph-tab-layout">
+          <div class="graph-header">
+            <h2 class="block-title">Граф сущностей</h2>
+            <span class="graph-subtitle" id="graph-subtitle">Выберите сущность в дереве, чтобы увидеть локальный граф связей</span>
+          </div>
+          <div class="graph-legend">
+            <span class="graph-legend-item graph-legend-item--character">Персонаж</span>
+            <span class="graph-legend-item graph-legend-item--event">Событие</span>
+            <span class="graph-legend-item graph-legend-item--location">Локация</span>
+            <span class="graph-legend-item graph-legend-item--clue">Улика</span>
+            <span class="graph-legend-item graph-legend-item--chapter">Глава</span>
+          </div>
+          <div class="graph-canvas-wrap">
+            <svg id="entity-graph-svg" class="entity-graph-svg" viewBox="0 0 800 480" preserveAspectRatio="xMidYMid meet">
+              <g id="graph-edges-layer"></g>
+              <g id="graph-nodes-layer"></g>
+            </svg>
+            <div class="graph-empty-state" id="graph-empty-state">
+              Выберите сущность в дереве, чтобы увидеть локальный граф связей.
+            </div>
+          </div>
         </div>
       </div>
 
