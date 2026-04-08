@@ -717,6 +717,60 @@ return `
   </div>
 `;
 }
+function renderClueDetail(obj) {
+  const typeLabel = TYPE_LABELS[obj.type] || obj.type;
+  const statusBadge = renderStatusBadge(obj.status);
+  const tagsHtml = (obj.tags && obj.tags.length)
+    ? `<div class="simple-detail-tags">${obj.tags.map(t => `<span class="detail-tag">${escapeHtml(t)}</span>`).join('')}</div>`
+    : '';
+  return `
+    <div class="simple-detail-card">
+      <div class="simple-detail-header">
+        <span class="simple-detail-type">${typeLabel}</span>
+        ${statusBadge}
+      </div>
+      <div class="detail-name">${escapeHtml(obj.name || '')}</div>
+      <div class="detail-summary">${escapeHtml(obj.summary || '')}</div>
+      ${tagsHtml}
+    </div>
+  `;
+}
+function renderWorldRuleDetail(obj) {
+  const typeLabel = TYPE_LABELS[obj.type] || obj.type;
+  const statusBadge = renderStatusBadge(obj.status);
+  const tagsHtml = (obj.tags && obj.tags.length)
+    ? `<div class="simple-detail-tags">${obj.tags.map(t => `<span class="detail-tag">${escapeHtml(t)}</span>`).join('')}</div>`
+    : '';
+  return `
+    <div class="simple-detail-card">
+      <div class="simple-detail-header">
+        <span class="simple-detail-type">${typeLabel}</span>
+        ${statusBadge}
+      </div>
+      <div class="detail-name">${escapeHtml(obj.name || '')}</div>
+      <div class="detail-summary">${escapeHtml(obj.summary || '')}</div>
+      ${tagsHtml}
+    </div>
+  `;
+}
+function renderCategoryDetail(obj) {
+  const typeLabel = TYPE_LABELS[obj.type] || obj.type;
+  const tagsHtml = (obj.tags && obj.tags.length)
+    ? `<div class="simple-detail-tags">${obj.tags.map(t => `<span class="detail-tag">${escapeHtml(t)}</span>`).join('')}</div>`
+    : '';
+  return `
+    <div class="category-detail-card">
+      <div class="simple-detail-header">
+        <span class="simple-detail-type">${typeLabel}</span>
+        <span class="category-detail-badge">сводка</span>
+      </div>
+      <div class="detail-name">${escapeHtml(obj.name || '')}</div>
+      <div class="detail-summary">${escapeHtml(obj.summary || '')}</div>
+      ${tagsHtml}
+      <div class="category-detail-note">Агрегированная сводка — не отдельная сущность мира.</div>
+    </div>
+  `;
+}
 function renderDetail(obj) {
 if (!obj) return '<span class="placeholder-text">Ничего не выбрано</span>';
 switch (obj.type) {
@@ -724,6 +778,9 @@ case 'event':     return renderEventDetail(obj);
 case 'character': return renderCharacterDetail(obj);
 case 'location':  return renderLocationDetail(obj);
 case 'chapter':   return renderChapterDetail(obj);
+case 'clue':      return renderClueDetail(obj);
+case 'worldRule': return renderWorldRuleDetail(obj);
+case 'category':  return renderCategoryDetail(obj);
 default:          return renderBaseFields(obj);
 }
 }

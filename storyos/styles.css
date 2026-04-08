@@ -1693,4 +1693,59 @@ location-detail-panel-title {
     grid-template-columns: 110px 1fr;
   }
 }
+
+
+/* ── Simple detail card (clue, worldRule) ──────────────────── */
+.simple-detail-card,
+.category-detail-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 560px;
+}
+
+.simple-detail-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 2px;
+}
+
+.simple-detail-type {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--text-muted);
+}
+
+.simple-detail-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+/* ── Category summary card ─────────────────────────────────── */
+.category-detail-badge {
+  font-size: 10px;
+  padding: 2px 7px;
+  background: #1e1e35;
+  border: 1px solid var(--border-light);
+  border-radius: 10px;
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.category-detail-note {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 6px 10px;
+  background: var(--bg-base);
+  border-left: 2px solid var(--border-light);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  margin-top: 4px;
+}
 ```
