@@ -3,6 +3,19 @@ Story OS v0.1 — domain model + UI logic
 No backend, no build step. Pure DOM manipulation.
 */
 // ══════════════════════════════════════════════════════════════
+// CONSTANTS
+// ══════════════════════════════════════════════════════════════
+const TYPELABELS = {
+  character: 'Персонаж',
+  event:     'Событие',
+  location:  'Локация',
+  clue:      'Улика',
+  worldRule: 'Правило мира',
+  chapter:   'Глава',
+  category:  'Категория',
+};
+
+// ══════════════════════════════════════════════════════════════
 // DOMAIN MODEL — mock data
 // ══════════════════════════════════════════════════════════════
 const mockProject = {
@@ -222,6 +235,9 @@ label: 'Свидетель события' },
 { id: 'rel5', type: 'last-seen',         fromId: 'char3', toId: 'ev1',
 label: 'Последний видевший жертву' },
 ];
+// ── Source fragment mock data ──────────────────────────────────
+let mockSourceFragment = 'Громов вошёл в особняк около полуночи. В библиотеке он обнаружил тело — убийство было совершено несколько часов назад. На полу лежало письмо без подписи. Марина Соколова стояла у окна — она явно что-то знала. Черных, по словам слуги, покинул особняк ещё до полуночи. В кабинете нотариуса хранились копии документов Вороновых. Сейф был вскрыт. Следователь вспомнил о дневнике, который упоминала Соколова.';
+let mockExtractionResults = null;
 function findById(id) {
 if (!id) return null;
 const inEntities = mockEntities.find(e => e.id === id);
@@ -828,6 +844,224 @@ return;
 }
 block.innerHTML = renderDetail(obj);
 }
+// ══════════════════════════════════════════════════════════════
+// SOURCE FRAGMENT TAB
+// ══════════════════════════════════════════════════════════════
+
+function extractCandidatesFromText(text) {
+  const result = {
+    characters: [],
+    events: [],
+    locations: [],
+    clues: [],
+  };
+
+  if (!text || !text.trim()) {
+    return result;
+  }
+
+  result.characters = mockEntities
+    .filter(e => e.type === 'character')
+    .map(entity => ({ entity, status: 'new' }));
+
+  result.events = mockEvents
+    .map(entity => ({ entity, status: 'new' }));
+
+  result.locations = mockEntities
+    .filter(e => e.type === 'location')
+    .map(entity => ({ entity, status: 'new' }));
+
+  result.clues = mockEntities
+    .filter(e => e.type === 'clue')
+    .map(entity => ({ entity, status: 'new' }));
+
+  return result;
+}
+
+function updateCandidateStatus(cardEl, status) {
+  if (!cardEl) return;
+
+  const statusEl = cardEl.querySelector('.detail-status');
+  if (!statusEl) return;
+
+  statusEl.classList.remove(
+    'detail-status--unverified',
+    'detail-status--confirmed',
+    'detail-status--rejected'
+  );
+
+  let label = 'Не проверено';
+
+  if (status === 'confirmed') {
+    statusEl.classList.add('detail-status--confirmed');
+    label = 'Проверено';
+  } else if (status === 'rejected') {
+    statusEl.classList.add('detail-status--rejected');
+    label = 'Отклонено';
+  } else {
+    statusEl.classList.add('detail-status--unverified');
+  }
+
+  statusEl.textContent = label;
+}
+
+function renderSourceCandidates(result) {
+  const container = document.getElementById('source-candidates');
+  const message = document.getElementById('source-fragment-message');
+
+  if (!container) {
+    return;
+  }
+
+  const totalCount =
+    (result.characters?.length || 0) +
+    (result.events?.length || 0) +
+    (result.locations?.length || 0) +
+    (result.clues?.length || 0);
+
+  if (message) {
+    message.textContent = totalCount
+      ? `Найдено кандидатов: ${totalCount}. Выберите карточку для просмотра деталей.`
+      : 'Совпадений не найдено. Попробуйте другой фрагмент.';
+  }
+
+  const groups = [
+    { key: 'characters', label: 'Персонажи' },
+    { key: 'events', label: 'События' },
+    { key: 'locations', label: 'Локации' },
+    { key: 'clues', label: 'Улики' },
+  ];
+
+  const html = groups.map(group => {
+    const items = result[group.key] || [];
+
+    if (!items.length) {
+      return `
+        <section class="source-group">
+          <h3 class="source-group-title">${group.label}</h3>
+          <p class="source-group-empty">Совпадений в этой группе не найдено.</p>
+        </section>
+      `;
+    }
+
+    return `
+      <section class="source-group">
+        <h3 class="source-group-title">${group.label}</h3>
+        <div class="source-group-list">
+          ${items.map((cand, idx) => {
+            const entity = cand.entity;
+            const typeLabel = TYPELABELS[entity.type] || entity.type;
+
+            return `
+              <article
+                class="source-candidate-card"
+                data-id="${entity.id}"
+                data-group="${group.key}"
+                data-index="${idx}"
+              >
+                <div class="source-candidate-main">
+                  <div class="detail-header">
+                    <span class="detail-type">${escapeHtml(typeLabel)}</span>
+                    <span class="detail-status detail-status--unverified">Не проверено</span>
+                  </div>
+                  <div class="detail-name">${escapeHtml(entity.name || entity.title || 'Без названия')}</div>
+                  <div class="detail-summary">${escapeHtml(entity.summary || '')}</div>
+                </div>
+
+                <div class="source-candidate-actions">
+                  <button type="button" class="source-btn source-btn--confirm">Проверено</button>
+                  <button type="button" class="source-btn source-btn--reject">Отклонить</button>
+                  <button type="button" class="source-btn source-btn--remove">Удалить</button>
+                </div>
+              </article>
+            `;
+          }).join('')}
+        </div>
+      </section>
+    `;
+  }).join('');
+
+  container.innerHTML = html;
+
+  container.querySelectorAll('.source-candidate-card').forEach(card => {
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('.source-btn')) return;
+      const id = card.dataset.id;
+      if (id) selectItem(id);
+    });
+  });
+
+  container.querySelectorAll('.source-btn--confirm').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const card = btn.closest('.source-candidate-card');
+      updateCandidateStatus(card, 'confirmed');
+    });
+  });
+
+  container.querySelectorAll('.source-btn--reject').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const card = btn.closest('.source-candidate-card');
+      updateCandidateStatus(card, 'rejected');
+    });
+  });
+
+  container.querySelectorAll('.source-btn--remove').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const card = btn.closest('.source-candidate-card');
+      if (card) card.remove();
+    });
+  });
+}
+
+function initSourceFragmentTab() {
+  const textarea  = document.getElementById('source-fragment-input');
+  const analyzeBtn = document.getElementById('source-analyze-btn');
+  const msgEl     = document.getElementById('source-fragment-message');
+  const container = document.getElementById('source-candidates');
+  if (!textarea || !analyzeBtn || !msgEl || !container) return;
+
+  textarea.value = mockSourceFragment;
+
+  analyzeBtn.addEventListener('click', () => {
+    const text = textarea.value.trim();
+    if (!text) {
+      msgEl.textContent = 'Введите фрагмент текста для разбора.';
+      msgEl.classList.add('source-fragment-message--warn');
+      return;
+    }
+    msgEl.textContent = '';
+    msgEl.classList.remove('source-fragment-message--warn');
+    mockExtractionResults = extractCandidatesFromText(text);
+    renderSourceCandidates(mockExtractionResults);
+  });
+
+  // Delegated handler: button clicks update status; card body clicks trigger selectItem
+  container.addEventListener('click', e => {
+    const actionBtn = e.target.closest('.source-candidate-btn');
+    if (actionBtn) {
+      e.stopPropagation();
+      const action   = actionBtn.dataset.action;
+      const groupKey = actionBtn.dataset.group;
+      const entityId = actionBtn.dataset.entityId;
+      if (mockExtractionResults && groupKey && entityId) {
+        const candidate = mockExtractionResults[groupKey].find(c => c.entity.id === entityId);
+        if (candidate) {
+          candidate.status = action === 'confirm' ? 'confirmed' : 'rejected';
+          renderSourceCandidates(mockExtractionResults);
+        }
+      }
+      return;
+    }
+    const card = e.target.closest('.source-candidate-card');
+    if (card && card.dataset.id) {
+      selectItem(card.dataset.id);
+    }
+  });
+}
+
 function initTabs() {
 const tabs = document.querySelectorAll('.tab');
 tabs.forEach(tab => {
@@ -877,6 +1111,7 @@ const STUB_REPLIES = [
 'Письмо без подписи и сломанный замок — два физических доказательства. Их достаточно для ордера.',
 ];
 let replyIndex = 0;
+
 function initChat() {
 const input    = document.getElementById('chat-input');
 const sendBtn  = document.getElementById('chat-send');
@@ -926,4 +1161,5 @@ document.addEventListener('DOMContentLoaded', () => {
   initChat();
   initTimelines();
   renderDashboardMiniTimelines();
+  initSourceFragmentTab();
 });
