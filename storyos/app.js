@@ -517,39 +517,205 @@ function renderEventDetail(ev) {
   `;
 }
 function renderCharacterDetail(char) {
-const relations = getCharacterRelations(char.id);
-const events    = getCharacterEvents(char.id);
-const relList = relations.length
-? `<div class="detail-section-title">Связи</div> <ul class="detail-list">${relations.map(r => `<li>${escapeHtml(r.label)}</li>`).join('')}</ul>`
-: '';
-const evList = events.length
-? `<div class="detail-section-title">Связанные события</div> <ul class="detail-list">${events.map(e => `<li>${escapeHtml(e.name)}</li>`).join('')}</ul>`
-: '';
-return `${renderBaseFields(char)}${relList}${evList}`;
+  const relations = getCharacterRelations(char.id);
+  const events = getCharacterEvents(char.id);
+
+  const typeLabel = TYPE_LABELS[char.type] || char.type;
+  const statusBadge = renderStatusBadge(char.status);
+
+  const tagsHtml = (char.tags && char.tags.length)
+    ? `<div class="character-detail-tags">${char.tags.map(t => `<span class="detail-tag">${escapeHtml(t)}</span>`).join('')}</div>`
+    : '';
+
+  const relationsHtml = `
+    <div class="character-detail-panel">
+      <div class="character-detail-panel-title">Связи</div>
+      <div class="character-detail-list">
+        ${relations.length
+          ? relations.map(r => `
+              <div class="character-detail-list-item">
+                <span class="character-detail-list-main">${escapeHtml(r.label)}</span>
+              </div>
+            `).join('')
+          : `<div class="character-detail-list-item character-detail-list-item--empty">Нет связей</div>`}
+      </div>
+    </div>
+  `;
+
+  const eventsHtml = `
+    <div class="character-detail-panel">
+      <div class="character-detail-panel-title">Связанные события</div>
+      <div class="character-detail-list">
+        ${events.length
+          ? events.map(e => `
+              <div class="character-detail-list-item">
+                <span class="character-detail-list-main">${escapeHtml(e.name)}</span>
+                ${e.storyTime ? `<span class="character-detail-list-meta detail-mono">${escapeHtml(e.storyTime.replace('T', ' '))}</span>` : ''}
+              </div>
+            `).join('')
+          : `<div class="character-detail-list-item character-detail-list-item--empty">Нет событий</div>`}
+      </div>
+    </div>
+  `;
+
+  return `
+    <div class="character-detail-card">
+      <div class="character-detail-grid">
+        <div class="character-detail-type">${typeLabel}</div>
+        <div class="character-detail-status">${statusBadge}</div>
+
+        <div class="character-detail-title">
+          <div class="detail-name">${escapeHtml(char.name)}</div>
+        </div>
+
+        <div class="character-detail-summary">
+          <div class="detail-summary">${escapeHtml(char.summary || '')}</div>
+        </div>
+
+        ${tagsHtml}
+      </div>
+
+      <div class="character-detail-panels">
+        ${relationsHtml}
+        ${eventsHtml}
+      </div>
+    </div>
+  `;
 }
 function renderLocationDetail(loc) {
-const events = getLocationEvents(loc.id);
-const evList = events.length
-? `<div class="detail-section-title">События здесь</div> <ul class="detail-list">${events.map(e => `<li>${escapeHtml(e.name)}</li>`).join('')}</ul>`
-: '';
-return `${renderBaseFields(loc)}${evList}`;
+  const events = getLocationEvents(loc.id);
+
+  const typeLabel = TYPE_LABELS[loc.type] || loc.type;
+  const statusBadge = renderStatusBadge(loc.status);
+
+  const tagsHtml = (loc.tags && loc.tags.length)
+    ? `<div class="location-detail-tags">${loc.tags.map(t => `<span class="detail-tag">${escapeHtml(t)}</span>`).join('')}</div>`
+    : '';
+
+  const eventsHtml = `
+    <div class="location-detail-panel">
+      <div class="location-detail-panel-title">События здесь</div>
+      <div class="location-detail-list">
+        ${events.length
+          ? events.map(e => `
+              <div class="location-detail-list-item">
+                <div class="location-detail-list-main">
+                  <div class="location-detail-event-name">${escapeHtml(e.name)}</div>
+                  <div class="location-detail-event-summary">${escapeHtml(e.summary || '')}</div>
+                </div>
+                <div class="location-detail-list-side">
+                  ${e.storyTime ? `<div class="location-detail-list-meta detail-mono">${escapeHtml(e.storyTime.replace('T', ' '))}</div>` : ''}
+                  ${e.narrativeOrder != null ? `<div class="location-detail-list-order detail-mono">#${e.narrativeOrder}</div>` : ''}
+                </div>
+              </div>
+            `).join('')
+          : `<div class="location-detail-list-item location-detail-list-item--empty">Для этой локации пока нет событий</div>`}
+      </div>
+    </div>
+  `;
+
+  return `
+    <div class="location-detail-card">
+      <div class="location-detail-grid">
+        <div class="location-detail-type">${typeLabel}</div>
+        <div class="location-detail-status">${statusBadge}</div>
+
+        <div class="location-detail-title">
+          <div class="detail-name">${escapeHtml(loc.name)}</div>
+        </div>
+
+        <div class="location-detail-summary">
+          <div class="detail-summary">${escapeHtml(loc.summary || '')}</div>
+        </div>
+
+        ${tagsHtml}
+      </div>
+
+      ${eventsHtml}
+    </div>
+  `;
 }
 function renderChapterDetail(unit) {
-const povChar = unit.pov ? findById(unit.pov) : null;
-const linked  = getChapterLinkedEvents(unit.linkedEventIds || []);
-const povLine = povChar
-  ? `<div class="detail-row"><span class="detail-row-label">Точка зрения</span><span>${escapeHtml(povChar.name)}</span></div>`
-  : '';
+  const povChar = unit.pov ? findById(unit.pov) : null;
+  const linked = getChapterLinkedEvents(unit.linkedEventIds || []);
 
-const orderLine = unit.narrativeOrder != null
-  ? `<div class="detail-row"><span class="detail-row-label">Порядок раскрытия</span><span class="detail-mono">#${unit.narrativeOrder}</span></div>`
-  : '';
+  const typeLabel = TYPE_LABELS[unit.type] || unit.type;
+  const statusBadge = renderStatusBadge(unit.status);
 
-const evList = linked.length
-  ? `<div class="detail-section-title">Связанные события</div>
-     <ul class="detail-list">${linked.map(e => `<li>${escapeHtml(e.name)}</li>`).join('')}</ul>`
-  : '';
-return `${renderBaseFields(unit)} <div class="detail-meta">${povLine}${orderLine}</div> ${evList}`;
+  const chapterLabel = unit.chapter != null ? `Глава ${unit.chapter}` : (unit.title || '');
+  const titleText = unit.title || chapterLabel || '';
+
+  const tagsHtml = (unit.tags && unit.tags.length)
+    ? `<div class="chapter-detail-tags">${unit.tags.map(t => `<span class="detail-tag">${escapeHtml(t)}</span>`).join('')}</div>`
+    : '';
+
+  const factsHtml = `
+    <div class="chapter-detail-facts">
+      <div class="chapter-detail-facts-grid">
+        <div class="chapter-detail-fact-key">Глава</div>
+        <div class="chapter-detail-fact-val">${escapeHtml(chapterLabel)}</div>
+
+        ${povChar ? `
+          <div class="chapter-detail-fact-key">Точка зрения</div>
+          <div class="chapter-detail-fact-val">${escapeHtml(povChar.name)}</div>
+        ` : ''}
+
+        ${unit.narrativeOrder != null ? `
+          <div class="chapter-detail-fact-key">Порядок раскрытия</div>
+          <div class="chapter-detail-fact-val detail-mono">#${unit.narrativeOrder}</div>
+        ` : ''}
+      </div>
+    </div>
+  `;
+
+  const eventsHtml = `
+    <div class="chapter-detail-panel">
+      <div class="chapter-detail-panel-title">Связанные события</div>
+      <div class="chapter-detail-list">
+        ${linked.length
+          ? linked.map(e => `
+              <div class="chapter-detail-list-item">
+                <div class="chapter-detail-list-main">
+                  <div class="chapter-detail-event-name">${escapeHtml(e.name)}</div>
+                  <div class="chapter-detail-event-summary">${escapeHtml(e.summary || '')}</div>
+                </div>
+                <div class="chapter-detail-list-side">
+                  ${e.storyTime ? `<div class="chapter-detail-list-meta detail-mono">${escapeHtml(e.storyTime.replace('T', ' '))}</div>` : ''}
+                  ${e.narrativeOrder != null ? `<div class="chapter-detail-list-order detail-mono">#${e.narrativeOrder}</div>` : ''}
+                </div>
+              </div>
+            `).join('')
+          : `<div class="chapter-detail-list-item chapter-detail-list-item--empty">У главы пока нет связанных событий</div>`}
+      </div>
+    </div>
+  `;
+
+return `
+  <div class="chapter-detail-card">
+    <div class="chapter-detail-head">
+      <div class="chapter-detail-metahead">
+        <div class="chapter-detail-type">${typeLabel}</div>
+        ${statusBadge}
+      </div>
+
+      <div class="chapter-detail-main">
+        <div class="chapter-detail-title">
+          <div class="detail-name">${escapeHtml(titleText)}</div>
+        </div>
+        ${tagsHtml}
+      </div>
+
+      <div class="chapter-detail-summary">
+        <div class="detail-summary">${escapeHtml(unit.summary)}</div>
+      </div>
+    </div>
+
+    <div class="chapter-detail-bottom">
+      ${factsHtml}
+      ${eventsHtml}
+    </div>
+  </div>
+`;
 }
 function renderDetail(obj) {
 if (!obj) return '<span class="placeholder-text">Ничего не выбрано</span>';
