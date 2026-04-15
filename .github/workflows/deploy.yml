@@ -13,11 +13,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup SSH key
+      - name: Restore SSH key from base64
         shell: bash
         run: |
           mkdir -p ~/.ssh
-          printf '%s\n' "${{ secrets.OFFICE_DEPLOY_KEY }}" > ~/.ssh/id_ed25519_office_deploy
+          echo "${{ secrets.OFFICE_DEPLOY_KEY }}" | base64 -d > ~/.ssh/id_ed25519_office_deploy
           chmod 600 ~/.ssh/id_ed25519_office_deploy
 
       - name: Add server to known_hosts
