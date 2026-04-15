@@ -904,70 +904,223 @@ function getEntityGraphNeighbors(id) {
 }
 
 function buildOverviewGraphData() {
+  // Ring-based layout centred on ev1 ("Убийство в особняке")
   const SVG_W = 800, SVG_H = 480;
   const cx = SVG_W / 2, cy = SVG_H / 2;
-  const overviewIds = ['char1', 'char2', 'char3', 'char4', 'ev1', 'ev2', 'loc1', 'clue1'];
-  const R = 185;
-  const nodes = [];
-  const edges = [];
+  // Radii for layers 0-3 (0 = centre)
+  const RING_R = [0, 110, 178, 220];
 
-  overviewIds.forEach((id, i) => {
+  const ev1 = mockEvents.find(e => e.id === 'ev1');
+  if (!ev1) return { nodes: [], edges: [], empty: true };
+
+  const addedIds = new Set();
+  const nodes    = [];
+  const edges    = [];
+
+  function addNode(id, layer) {
+    if (addedIds.has(id)) return;
     const obj = findById(id);
-    if (!obj) return;
-    const angle = -Math.PI / 2 + (i * 2 * Math.PI) / overviewIds.length;
-    nodes.push({ id, name: obj.name || obj.title, type: obj.type,
-      x: cx + R * Math.cos(angle), y: cy + R * Math.sin(angle), isCenter: false });
-  });
-
-  const nodeIds = new Set(overviewIds);
-  mockRelations.forEach(rel => {
-    if (!nodeIds.has(rel.fromId) || !nodeIds.has(rel.toId)) return;
-    const from = nodes.find(n => n.id === rel.fromId);
-    const to   = nodes.find(n => n.id === rel.toId);
-    if (from && to) edges.push({ fromId: rel.fromId, toId: rel.toId, label: rel.label,
-      fx: from.x, fy: from.y, tx: to.x, ty: to.y });
-  });
-
-  // ev1 → loc1 (structural link not in mockRelations)
-  const ev1Node  = nodes.find(n => n.id === 'ev1');
-  const loc1Node = nodes.find(n => n.id === 'loc1');
-  if (ev1Node && loc1Node) {
-    edges.push({ fromId: 'ev1', toId: 'loc1', label: 'место',
-      fx: ev1Node.x, fy: ev1Node.y, tx: loc1Node.x, ty: loc1Node.y });
+    if (!obj || obj.type === 'category') return;
+    addedIds.add(id);
+    nodes.push({ id, name: obj.name || obj.title || '', type: obj.type,
+      layerIndex: layer, x: 0, y: 0, isCenter: layer === 0 });
   }
+
+  function addEdge(fromId, toId, label, relId) {
+    if (!addedIds.has(fromId) || !addedIds.has(toId)) return;
+    const from = nodes.find(n => n.id === fromId);
+    const to   = nodes.find(n => n.id === toId);
+    if (!from || !to) return;
+    if (edges.some(e => (e.fromId === fromId && e.toId === toId) ||
+                        (e.fromId === toId   && e.toId === fromId))) return;
+    edges.push({ fromId, toId, label, relId: relId || null,
+      fx: from.x, fy: from.y, tx: to.x, ty: to.y });
+  }
+
+  // Layer 0 — centre: ev1
+  addNode('ev1', 0);
+
+  // Layer 1 — ev1's characters + ev1's location
+  (ev1.characterIds || []).forEach(id => addNode(id, 1));
+  if (ev1.locationId) addNode(ev1.locationId, 1);
+
+  // Layer 2 — events sharing chars/loc with ev1; chapters that include ev1
+  const ev1Chars = new Set(ev1.characterIds || []);
+  mockEvents.forEach(ev => {
+    if (ev.id === 'ev1') return;
+    const sharesChar = (ev.characterIds || []).some(c => ev1Chars.has(c));
+    const sharesLoc  = ev1.locationId && ev.locationId === ev1.locationId;
+    if (sharesChar || sharesLoc) addNode(ev.id, 2);
+  });
+  mockNarrativeUnits.forEach(ch => {
+    if ((ch.linkedEventIds || []).includes('ev1')) addNode(ch.id, 2);
+  });
+
+  // Layer 3 — clues + world rules (background context)
+  mockEntities.forEach(e => {
+    if (e.type === 'clue' || e.type === 'worldRule') addNode(e.id, 3);
+  });
+
+  // Assign positions per layer
+  const byLayer = [[], [], [], []];
+  nodes.forEach(n => byLayer[n.layerIndex].push(n));
+  byLayer[0].forEach(n => { n.x = cx; n.y = cy; });
+  [1, 2, 3].forEach(layer => {
+    const ring = byLayer[layer];
+    if (!ring.length) return;
+    const r = RING_R[layer];
+    ring.forEach((n, i) => {
+      const angle = -Math.PI / 2 + (i * 2 * Math.PI) / ring.length;
+      n.x = cx + r * Math.cos(angle);
+      n.y = cy + r * Math.sin(angle);
+    });
+  });
+
+  // Build edges — mockRelations + structural links
+  mockRelations.forEach(r => addEdge(r.fromId, r.toId, r.label, r.id));
+  mockEvents.forEach(ev => {
+    if (!addedIds.has(ev.id)) return;
+    (ev.characterIds || []).forEach(cId => addEdge(ev.id, cId, 'участник'));
+    if (ev.locationId) addEdge(ev.id, ev.locationId, 'место');
+  });
+  mockNarrativeUnits.forEach(ch => {
+    if (!addedIds.has(ch.id)) return;
+    (ch.linkedEventIds || []).forEach(evId => addEdge(ch.id, evId, 'в главе'));
+  });
+  // Ring-3 nodes connect to ev1 as context
+  byLayer[3].forEach(n => addEdge('ev1', n.id, 'контекст'));
 
   return { nodes, edges, empty: false, isOverview: true };
 }
 
-function buildGraphData(selectedId) {
-  if (!selectedId) return buildOverviewGraphData();
+function buildGraphData(centerId) {
+  if (!centerId) return buildOverviewGraphData();
 
-  const center = findById(selectedId);
+  const center = findById(centerId);
   if (!center || center.type === 'category') return buildOverviewGraphData();
 
   const SVG_W = 800, SVG_H = 480;
   const cx = SVG_W / 2, cy = SVG_H / 2;
 
-  const neighborLinks = getEntityGraphNeighbors(selectedId);
-  const nodes = [{ id: selectedId, name: center.name || center.title, type: center.type,
-    x: cx, y: cy, isCenter: true }];
-  const edges = [];
+  const addedIds = new Set();
+  const nodes    = [];
+  const edges    = [];
 
-  if (!neighborLinks.length) return { nodes, edges, empty: true };
+  function addNode(id, layer) {
+    if (addedIds.has(id)) return;
+    const obj = findById(id);
+    if (!obj || obj.type === 'category') return;
+    addedIds.add(id);
+    nodes.push({ id, name: obj.name || obj.title || '', type: obj.type,
+      layerIndex: layer, x: 0, y: 0, isCenter: layer === 0 });
+  }
 
-  const R = Math.min(180, 130 + neighborLinks.length * 8);
-  neighborLinks.forEach(({ id: neighborId, label }, i) => {
-    const angle = -Math.PI / 2 + (i * 2 * Math.PI) / neighborLinks.length;
-    const nx = cx + R * Math.cos(angle);
-    const ny = cy + R * Math.sin(angle);
-    const neighbor = findById(neighborId);
-    nodes.push({ id: neighborId, name: neighbor.name || neighbor.title, type: neighbor.type,
-      x: nx, y: ny, isCenter: false });
-    edges.push({ fromId: selectedId, toId: neighborId, label,
-      fx: cx, fy: cy, tx: nx, ty: ny });
+  function addEdge(fromId, toId, label, relId) {
+    if (!addedIds.has(fromId) || !addedIds.has(toId)) return;
+    const from = nodes.find(n => n.id === fromId);
+    const to   = nodes.find(n => n.id === toId);
+    if (!from || !to) return;
+    if (edges.some(e => (e.fromId === fromId && e.toId === toId) ||
+                        (e.fromId === toId   && e.toId === fromId))) return;
+    edges.push({ fromId, toId, label, relId: relId || null,
+      fx: from.x, fy: from.y, tx: to.x, ty: to.y });
+  }
+
+  // Layer 0 — centre
+  addNode(centerId, 0);
+  nodes[0].x = cx;
+  nodes[0].y = cy;
+
+  // Layer 1 — direct structural neighbours
+  const ring1 = new Set();
+  if (center.type === 'event') {
+    (center.characterIds || []).forEach(id => ring1.add(id));
+    if (center.locationId) ring1.add(center.locationId);
+    mockNarrativeUnits.forEach(ch => {
+      if ((ch.linkedEventIds || []).includes(centerId)) ring1.add(ch.id);
+    });
+  } else if (center.type === 'character') {
+    mockEvents.forEach(ev => {
+      if ((ev.characterIds || []).includes(centerId)) ring1.add(ev.id);
+    });
+    mockRelations.forEach(r => {
+      if (r.fromId === centerId) ring1.add(r.toId);
+      else if (r.toId === centerId) ring1.add(r.fromId);
+    });
+  } else if (center.type === 'location') {
+    mockEvents.forEach(ev => { if (ev.locationId === centerId) ring1.add(ev.id); });
+  } else if (center.type === 'chapter') {
+    (center.linkedEventIds || []).forEach(id => ring1.add(id));
+  } else {
+    // clue / worldRule — simplified: all events as ring1
+    mockEvents.forEach(ev => ring1.add(ev.id));
+  }
+  ring1.delete(centerId);
+  ring1.forEach(id => addNode(id, 1));
+
+  // Layer 2 — neighbours of ring1 not already seen
+  const ring2 = new Set();
+  ring1.forEach(id => {
+    const obj = findById(id);
+    if (!obj) return;
+    if (obj.type === 'event') {
+      (obj.characterIds || []).forEach(cId => ring2.add(cId));
+      if (obj.locationId) ring2.add(obj.locationId);
+    } else if (obj.type === 'character') {
+      mockEvents.forEach(ev => {
+        if ((ev.characterIds || []).includes(id)) ring2.add(ev.id);
+      });
+    } else if (obj.type === 'location') {
+      mockEvents.forEach(ev => { if (ev.locationId === id) ring2.add(ev.id); });
+    }
+  });
+  ring2.delete(centerId);
+  ring1.forEach(id => ring2.delete(id));
+  ring2.forEach(id => addNode(id, 2));
+
+  // Assign positions for layers 1 and 2
+  const byLayer = [[], [], []];
+  nodes.forEach(n => { if (byLayer[n.layerIndex]) byLayer[n.layerIndex].push(n); });
+  [1, 2].forEach(layer => {
+    const ring = byLayer[layer];
+    if (!ring.length) return;
+    const baseR = layer === 1 ? 135 : 215;
+    const r = Math.min(baseR, 115 + ring.length * 16);
+    ring.forEach((n, i) => {
+      const angle = -Math.PI / 2 + (i * 2 * Math.PI) / ring.length;
+      n.x = cx + r * Math.cos(angle);
+      n.y = cy + r * Math.sin(angle);
+    });
   });
 
-  return { nodes, edges, empty: false };
+  // Build edges
+  mockRelations.forEach(r => addEdge(r.fromId, r.toId, r.label, r.id));
+  mockEvents.forEach(ev => {
+    if (!addedIds.has(ev.id)) return;
+    (ev.characterIds || []).forEach(cId => addEdge(ev.id, cId, 'участник'));
+    if (ev.locationId) addEdge(ev.id, ev.locationId, 'место');
+  });
+  mockNarrativeUnits.forEach(ch => {
+    if (!addedIds.has(ch.id)) return;
+    (ch.linkedEventIds || []).forEach(evId => addEdge(ch.id, evId, 'в главе'));
+  });
+
+  const empty = nodes.length === 1 && edges.length === 0;
+  return { nodes, edges, empty };
+}
+
+// Returns true if the entity at nodeId first appears AFTER focusEvent in narrative order.
+// focusEvent is the currently selected event object, or null.
+function isFutureNode(nodeId, focusEvent) {
+  // TODO(human): Implement this function (5-8 lines).
+  // Hints:
+  //   - if focusEvent is null or not an event, return false (nothing is "future")
+  //   - for event/chapter nodes: compare their narrativeOrder with focusEvent.narrativeOrder
+  //   - for character/location nodes: they are "future" only if ALL events referencing them
+  //     have narrativeOrder > focusEvent.narrativeOrder
+  //   - for clue/worldRule nodes: treat as always present (return false)
+  if (!focusEvent || focusEvent.type !== 'event' || focusEvent.narrativeOrder == null) return false;
+  return false; // placeholder — replace with real logic
 }
 
 function renderEntityGraph(selectedId) {
@@ -984,10 +1137,12 @@ function renderEntityGraph(selectedId) {
 
   if (subtitle) {
     if (isOverview) {
-      subtitle.textContent = 'Обзор: ключевые узлы и связи';
+      subtitle.textContent = 'Обзор: центр — Убийство в особняке';
     } else if (selectedId) {
       const obj = findById(selectedId);
       subtitle.textContent = obj ? `Фокус: ${obj.name || obj.title}` : '';
+    } else {
+      subtitle.textContent = 'Выберите сущность или нажмите «Общий вид»';
     }
   }
 
@@ -1003,33 +1158,113 @@ function renderEntityGraph(selectedId) {
 
   if (emptyState) emptyState.style.display = 'none';
 
-  edgesLayer.innerHTML = edges.map(e => {
-    const mx = (e.fx + e.tx) / 2;
-    const my = (e.fy + e.ty) / 2 - 5;
+  // Determine current focus event for temporal "future" colouring
+  const focusEvent = selectedId
+    ? (mockEvents.find(e => e.id === selectedId) || null)
+    : null;
+  const tooltip = document.getElementById('graph-node-tooltip');
+
+  // ── Edges ──────────────────────────────────────────────────
+  edgesLayer.innerHTML = edges.map((e, idx) => {
+    const mx  = (e.fx + e.tx) / 2;
+    const my  = (e.fy + e.ty) / 2 - 5;
+    const fut = focusEvent &&
+      (isFutureNode(e.fromId, focusEvent) || isFutureNode(e.toId, focusEvent));
     return `
-      <line x1="${e.fx}" y1="${e.fy}" x2="${e.tx}" y2="${e.ty}" class="graph-edge"/>
-      <text x="${mx}" y="${my}" class="graph-edge-label">${escapeHtml(e.label)}</text>
+      <g class="graph-edge-group"
+         data-edge-id="edge-${idx}"
+         data-rel-id="${escapeHtml(e.relId || '')}"
+         data-from="${escapeHtml(e.fromId)}"
+         data-to="${escapeHtml(e.toId)}"
+         data-label="${escapeHtml(e.label)}">
+        <line x1="${e.fx}" y1="${e.fy}" x2="${e.tx}" y2="${e.ty}"
+              class="graph-edge${fut ? ' graph-edge--future' : ''}"/>
+        <line x1="${e.fx}" y1="${e.fy}" x2="${e.tx}" y2="${e.ty}"
+              class="graph-edge-hitarea"/>
+        <text x="${mx}" y="${my}"
+              class="graph-edge-label${fut ? ' graph-edge-label--future' : ''}">${escapeHtml(e.label)}</text>
+      </g>
     `;
   }).join('');
 
+  // ── Nodes ──────────────────────────────────────────────────
   nodesLayer.innerHTML = nodes.map(n => {
     const color = GRAPH_NODE_COLORS[n.type] || '#888';
     const r     = n.isCenter ? 28 : 20;
     const label = n.name.length > 15 ? n.name.slice(0, 13) + '…' : n.name;
     const abbr  = (TYPELABELS[n.type] || n.type).slice(0, 3).toUpperCase();
+    const fut   = focusEvent && !n.isCenter && isFutureNode(n.id, focusEvent);
+    const sel   = n.id === selectedId;
+    const cls   = ['graph-node',
+      n.isCenter ? 'graph-node--center' : '',
+      fut        ? 'graph-node--future'  : '',
+      sel        ? 'selected'            : '',
+    ].filter(Boolean).join(' ');
     return `
-      <g class="graph-node${n.isCenter ? ' graph-node--center' : ''}" data-id="${n.id}" transform="translate(${n.x},${n.y})">
-        <circle r="${r}" fill="${color}20" stroke="${color}" stroke-width="${n.isCenter ? 2.5 : 1.5}" class="graph-node-circle"/>
+      <g class="${cls}" data-id="${n.id}" data-type="${n.type}"
+         transform="translate(${n.x},${n.y})">
+        <circle r="${r}" fill="${color}20" stroke="${color}"
+                stroke-width="${n.isCenter ? 2.5 : 1.5}" class="graph-node-circle"/>
         <text class="graph-node-type" dy="4" fill="${color}">${escapeHtml(abbr)}</text>
         <text class="graph-node-label" dy="${r + 13}">${escapeHtml(label)}</text>
       </g>
     `;
   }).join('');
 
+  // ── Interaction handlers ───────────────────────────────────
   nodesLayer.querySelectorAll('.graph-node').forEach(el => {
     el.addEventListener('click', () => {
       const id = el.dataset.id;
       if (id) selectItem(id);
+    });
+
+    el.addEventListener('mouseenter', ev => {
+      if (!tooltip) return;
+      const obj = findById(el.dataset.id);
+      if (!obj) return;
+      const typeLabel   = TYPE_LABELS[obj.type] || obj.type;
+      const statusLabel = obj.status && obj.status !== 'n/a'
+        ? (STATUS_LABELS[obj.status] || obj.status) : '';
+      tooltip.innerHTML = `
+        <div class="graph-tooltip-type">${escapeHtml(typeLabel)}${statusLabel ? ' · ' + escapeHtml(statusLabel) : ''}</div>
+        <div class="graph-tooltip-name">${escapeHtml(obj.name || obj.title || '')}</div>
+        <div class="graph-tooltip-summary">${escapeHtml(obj.summary || '')}</div>
+      `;
+      const wrap = document.querySelector('.graph-canvas-wrap');
+      if (wrap) {
+        const wr = wrap.getBoundingClientRect();
+        tooltip.style.left = `${ev.clientX - wr.left + 14}px`;
+        tooltip.style.top  = `${ev.clientY - wr.top  - 8}px`;
+      }
+      tooltip.style.display = 'block';
+    });
+
+    el.addEventListener('mouseleave', () => {
+      if (tooltip) tooltip.style.display = 'none';
+    });
+  });
+
+  edgesLayer.querySelectorAll('.graph-edge-group').forEach(el => {
+    el.addEventListener('click', ev => {
+      ev.stopPropagation();
+      if (!tooltip) return;
+      const fromObj  = findById(el.dataset.from);
+      const toObj    = findById(el.dataset.to);
+      const fromName = fromObj ? (fromObj.name || fromObj.title || el.dataset.from) : el.dataset.from;
+      const toName   = toObj   ? (toObj.name   || toObj.title   || el.dataset.to)   : el.dataset.to;
+      tooltip.innerHTML = `
+        <div class="graph-tooltip-type">Связь</div>
+        <div class="graph-tooltip-name">${escapeHtml(fromName)} → ${escapeHtml(toName)}</div>
+        <div class="graph-tooltip-summary">${escapeHtml(el.dataset.label)}</div>
+      `;
+      const wrap = document.querySelector('.graph-canvas-wrap');
+      if (wrap) {
+        const wr = wrap.getBoundingClientRect();
+        tooltip.style.left = `${ev.clientX - wr.left + 14}px`;
+        tooltip.style.top  = `${ev.clientY - wr.top  - 8}px`;
+      }
+      tooltip.style.display = 'block';
+      setTimeout(() => { if (tooltip) tooltip.style.display = 'none'; }, 2500);
     });
   });
 }
@@ -1344,6 +1579,68 @@ return String(str)
 .replace(/>/g, '&gt;')
 .replace(/"/g, '&quot;');
 }
+// ── Graph timelines (compact strip inside entity-graph tab) ────
+function renderGraphTimelines() {
+  const storyTrack     = document.getElementById('graph-story-track');
+  const narrativeTrack = document.getElementById('graph-narrative-track');
+  if (!storyTrack || !narrativeTrack) return;
+
+  function shortLabel(ev) {
+    const name = ev.name || '';
+    return name.length > 8 ? name.slice(0, 7) + '…' : name;
+  }
+
+  const byStory = [...mockEvents].sort((a, b) => {
+    if (!a.storyTime) return 1;
+    if (!b.storyTime) return -1;
+    return a.storyTime.localeCompare(b.storyTime);
+  });
+
+  const byNarrative = [...mockEvents].sort((a, b) => {
+    if (a.narrativeOrder == null) return 1;
+    if (b.narrativeOrder == null) return -1;
+    return a.narrativeOrder - b.narrativeOrder;
+  });
+
+  storyTrack.innerHTML = byStory.map((ev, idx, arr) => {
+    const left = arr.length === 1 ? 50 : (idx / (arr.length - 1)) * 100;
+    return `<div class="tl-node" data-id="${ev.id}" style="left:${left}%">${escapeHtml(shortLabel(ev))}</div>`;
+  }).join('');
+
+  narrativeTrack.innerHTML = byNarrative.map((ev, idx, arr) => {
+    const left = arr.length === 1 ? 50 : (idx / (arr.length - 1)) * 100;
+    return `<div class="tl-node tl-node--narrative" data-id="${ev.id}" style="left:${left}%">${escapeHtml(shortLabel(ev))}</div>`;
+  }).join('');
+
+  [storyTrack, narrativeTrack].forEach(track => {
+    track.querySelectorAll('.tl-node').forEach(node => {
+      node.addEventListener('click', () => {
+        const id = node.dataset.id;
+        if (id) selectItem(id);
+      });
+    });
+  });
+}
+
+function initEntityGraphTab() {
+  const resetBtn = document.getElementById('graph-reset-btn');
+  if (resetBtn) {
+    resetBtn.addEventListener('click', () => selectItem(null));
+  }
+
+  // Create tooltip overlay inside .graph-canvas-wrap (absolute positioning context)
+  const wrap = document.querySelector('.graph-canvas-wrap');
+  if (wrap && !document.getElementById('graph-node-tooltip')) {
+    const tip = document.createElement('div');
+    tip.id        = 'graph-node-tooltip';
+    tip.className = 'graph-tooltip';
+    tip.style.display = 'none';
+    wrap.appendChild(tip);
+  }
+
+  renderGraphTimelines();
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   initTabs();
   initModeSwitcher();
@@ -1353,5 +1650,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initTimelines();
   renderDashboardMiniTimelines();
   initSourceFragmentTab();
-  renderEntityGraph(null);
+  initEntityGraphTab();   // sets up button, tooltip div, mini-timelines
+  renderEntityGraph(null); // initial overview render
 });

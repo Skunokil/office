@@ -213,6 +213,7 @@
           <div class="graph-header">
             <h2 class="block-title">Граф сущностей</h2>
             <span class="graph-subtitle" id="graph-subtitle">Выберите сущность в дереве, чтобы увидеть локальный граф связей</span>
+            <button class="graph-reset-btn" id="graph-reset-btn">Общий вид</button>
           </div>
           <div class="graph-legend">
             <span class="graph-legend-item graph-legend-item--character">Персонаж</span>
@@ -228,6 +229,16 @@
             </svg>
             <div class="graph-empty-state" id="graph-empty-state">
               Выберите сущность в дереве, чтобы увидеть локальный граф связей.
+            </div>
+          </div>
+          <div class="graph-timelines">
+            <div class="timeline-row">
+              <span class="tl-label">Фабула</span>
+              <div class="tl-track" id="graph-story-track"></div>
+            </div>
+            <div class="timeline-row">
+              <span class="tl-label">Изложение</span>
+              <div class="tl-track" id="graph-narrative-track"></div>
             </div>
           </div>
         </div>
