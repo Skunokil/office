@@ -13,17 +13,26 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup SSH agent
-        uses: webfactory/ssh-agent@v0.9.1
-        with:
-          ssh-private-key: ${{ secrets.OFFICE_DEPLOY_KEY }}
-
-      - name: Add server to known_hosts
+      - name: Setup SSH key
+        shell: bash
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan -H 155.212.225.69 >> ~/.ssh/known_hosts 2>/dev/null || true
+          printf '%s\n' "${{ secrets.OFFICE_DEPLOY_KEY }}" > ~/.ssh/id_ed25519_office_deploy
+          chmod 600 ~/.ssh/id_ed25519_office_deploy
+
+      - name: Add server to known_hosts
+        shell: bash
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H 155.212.225.69 >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Test SSH connection
+        shell: bash
+        run: |
+          ssh -i ~/.ssh/id_ed25519_office_deploy -o StrictHostKeyChecking=yes skunokil@155.212.225.69 'echo ok'
 
       - name: Deploy to server
+        shell: bash
         run: |
-          ssh -o StrictHostKeyChecking=no skunokil@155.212.225.69 \
+          ssh -i ~/.ssh/id_ed25519_office_deploy -o StrictHostKeyChecking=yes skunokil@155.212.225.69 \
             'cd ~/projects/office && git pull && echo "Deployed at $(date)"'
