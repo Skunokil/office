@@ -1,3 +1,8 @@
+# DEPRECATED (since storyos-v2-backend-v0.1.0):
+# This module contains in-memory mock data for the early Story OS v2 skeleton.
+# Runtime now uses PostgreSQL via db.py + repository.py.
+# This file is kept only for reference and will be removed in a future cleanup task.
+
 """
 Mock data for Story OS v2 — based on "Тайна голубой вазы" (Agatha Christie).
 
