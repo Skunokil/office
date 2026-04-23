@@ -34,6 +34,7 @@ app = FastAPI(
         {"name": "text", "description": "Text layer: Manuscript, TextBlock"},
         {"name": "epistemic", "description": "Epistemic layer: EpistemicTrack, EpistemicStep, EvidenceRole"},
         {"name": "diagnostic", "description": "Diagnostic layer: Issue"},
+        {"name": "workspace", "description": "Workspace layer: User, Workspace, WorkspaceMember (Task 14a)"},
     ],
     lifespan=lifespan,
 )
