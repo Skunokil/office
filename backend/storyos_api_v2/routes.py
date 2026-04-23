@@ -1,4 +1,5 @@
 from typing import Optional
+from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,8 +12,11 @@ from .models import (
     ManuscriptDetail,
     EpistemicTrackDetail,
     Issue,
+    Workspace,
     HealthResponse,
+    DemoBootstrapResponse,
 )
+from .services.cloning import clone_workspace
 
 router = APIRouter()
 
@@ -32,6 +36,72 @@ def health() -> HealthResponse:
 
 
 # ============================================================
+# ============================================================
+# WORKSPACE LAYER
+# ============================================================
+
+@router.post(
+    "/api/v2/workspaces/demo-bootstrap",
+    response_model=DemoBootstrapResponse,
+    tags=["workspace"],
+    summary="Создать demo workspace с клоном demo-истории",
+    description=(
+        "Создаёт нового пользователя и клонирует template workspace в его личный workspace. "
+        "Возвращает user_id, workspace_id, work_ids — фронт использует их как стартовый контекст. "
+        "ВНИМАНИЕ: endpoint без auth — только для MVP/локальной разработки. "
+        "В Task 15 будет закрыт или защищён."
+    ),
+)
+async def demo_bootstrap(db: AsyncSession = Depends(get_db)) -> DemoBootstrapResponse:
+    template = await repository.get_template_workspace(db)
+    if template is None:
+        raise HTTPException(
+            status_code=500,
+            detail="Template workspace not found or ambiguous — check DB seed",
+        )
+
+    handle = f"demo-{uuid4().hex[:8]}"
+    user = await repository.create_user(db, handle=handle, display_name="Demo User")
+
+    new_workspace_id, new_work_ids = await clone_workspace(
+        db,
+        template_workspace_id=UUID(template.id),
+        new_owner_id=UUID(user.id),
+        new_workspace_name="My Story OS Project",
+    )
+
+    await db.commit()
+
+    return DemoBootstrapResponse(
+        user_id=user.id,
+        workspace_id=str(new_workspace_id),
+        work_ids=[str(wid) for wid in new_work_ids],
+    )
+
+
+@router.get(
+    "/api/v2/workspaces/{workspace_id}/works",
+    response_model=list[Work],
+    tags=["canonical"],
+    summary="Список произведений в workspace",
+    description=(
+        "Возвращает все Work, принадлежащие данному workspace. "
+        "404 если workspace не существует. "
+        "200 / [] если workspace существует, но пуст."
+    ),
+)
+async def list_workspace_works(
+    workspace_id: str,
+    db: AsyncSession = Depends(get_db),
+) -> list[Work]:
+    if not await repository.check_workspace_exists(db, workspace_id):
+        raise HTTPException(
+            status_code=404, detail=f"Workspace '{workspace_id}' not found"
+        )
+    return await repository.get_works_by_workspace(db, workspace_id)
+
+
+# ============================================================
 # CANONICAL — Works
 # ============================================================
 
@@ -40,6 +110,10 @@ def health() -> HealthResponse:
     response_model=list[Work],
     tags=["canonical"],
     summary="Список произведений",
+    description=(
+        "Возвращает все works без фильтра по workspace. "
+        "ВНИМАНИЕ: небезопасно для multi-tenant — будет ограничен workspace в Task 15."
+    ),
 )
 async def list_works(db: AsyncSession = Depends(get_db)) -> list[Work]:
     return await repository.get_works(db)

@@ -4,6 +4,7 @@ All queries use SQLAlchemy Core text() against PostgreSQL.
 UUIDs from the DB are cast to str on read.
 """
 from typing import Optional
+from uuid import uuid4
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
@@ -23,6 +24,8 @@ from .models import (
     Issue,
     ManuscriptDetail,
     WorkStructure,
+    User,
+    Workspace,
 )
 
 
@@ -36,6 +39,7 @@ def _s(val) -> Optional[str]:
 def _row_work(row) -> Work:
     return Work(
         id=_s(row["id"]),
+        workspace_id=_s(row["workspace_id"]) if "workspace_id" in row.keys() else None,
         title=row["title"],
         author=row["author"],
         language=row["language"],
@@ -484,3 +488,91 @@ async def get_entity_mentions(
         )
         for row in rows
     ]
+
+
+# ── workspaces ────────────────────────────────────────────────
+
+async def check_workspace_exists(db: AsyncSession, workspace_id: str) -> bool:
+    result = await db.execute(
+        text("SELECT 1 FROM workspaces WHERE id::text = :id LIMIT 1"),
+        {"id": workspace_id},
+    )
+    return result.first() is not None
+
+
+async def get_works_by_workspace(db: AsyncSession, workspace_id: str) -> list[Work]:
+    result = await db.execute(
+        text(
+            "SELECT * FROM works"
+            " WHERE workspace_id::text = :wid"
+            " ORDER BY created_at"
+        ),
+        {"wid": workspace_id},
+    )
+    return [_row_work(r) for r in result.mappings()]
+
+
+async def get_template_workspace(db: AsyncSession) -> Optional[Workspace]:
+    rows = (await db.execute(
+        text("SELECT * FROM workspaces WHERE is_template = TRUE")
+    )).mappings().all()
+    if len(rows) != 1:
+        return None
+    row = rows[0]
+    return Workspace(
+        id=_s(row["id"]),
+        owner_id=_s(row["owner_id"]),
+        name=row["name"],
+        is_template=row["is_template"],
+        created_at=row["created_at"],
+    )
+
+
+async def create_user(
+    db: AsyncSession,
+    handle: str,
+    display_name: Optional[str] = None,
+) -> User:
+    new_id = str(uuid4())
+    await db.execute(
+        text("""
+            INSERT INTO users (id, handle, display_name)
+            VALUES (:id, :handle, :display_name)
+        """),
+        {"id": new_id, "handle": handle, "display_name": display_name},
+    )
+    return User(id=new_id, handle=handle, display_name=display_name)
+
+
+async def create_workspace(
+    db: AsyncSession,
+    owner_id: str,
+    name: str,
+    is_template: bool = False,
+) -> Workspace:
+    new_id = str(uuid4())
+    await db.execute(
+        text("""
+            INSERT INTO workspaces (id, owner_id, name, is_template)
+            VALUES (:id, :owner_id, :name, :is_template)
+        """),
+        {"id": new_id, "owner_id": owner_id, "name": name, "is_template": is_template},
+    )
+    return Workspace(id=new_id, owner_id=owner_id, name=name, is_template=is_template)
+
+
+async def get_workspace_by_id(db: AsyncSession, workspace_id: str) -> Optional[Workspace]:
+    result = await db.execute(
+        text("SELECT * FROM workspaces WHERE id::text = :id"),
+        {"id": workspace_id},
+    )
+    row = result.mappings().first()
+    if not row:
+        return None
+    return Workspace(
+        id=_s(row["id"]),
+        owner_id=_s(row["owner_id"]),
+        name=row["name"],
+        is_template=row["is_template"],
+        created_at=row["created_at"],
+    )

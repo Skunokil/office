@@ -197,6 +197,7 @@ class IssueStatus(str, Enum):
 
 class Work(BaseModel):
     id: str
+    workspace_id: Optional[str] = None
     title: str
     author: Optional[str] = None
     language: str = "ru"
@@ -410,7 +411,45 @@ class ManuscriptDetail(BaseModel):
     text_blocks: list[TextBlock] = Field(default_factory=list)
 
 
+# ============================================================
+# WORKSPACE LAYER
+# ============================================================
+
+class WorkspaceMemberRole(str, Enum):
+    owner = "owner"
+    editor = "editor"
+    viewer = "viewer"
+
+
+class User(BaseModel):
+    id: str
+    handle: str
+    display_name: Optional[str] = None
+    created_at: Optional[datetime] = None
+
+
+class Workspace(BaseModel):
+    id: str
+    owner_id: str
+    name: str
+    is_template: bool = False
+    created_at: Optional[datetime] = None
+
+
+class WorkspaceMember(BaseModel):
+    workspace_id: str
+    user_id: str
+    role: WorkspaceMemberRole = WorkspaceMemberRole.editor
+    joined_at: Optional[datetime] = None
+
+
 class HealthResponse(BaseModel):
     status: str
     service: str
     version: str
+
+
+class DemoBootstrapResponse(BaseModel):
+    user_id: str
+    workspace_id: str
+    work_ids: list[str]
